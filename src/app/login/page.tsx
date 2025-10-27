@@ -1,3 +1,6 @@
+"use client";
+
+import { Suspense } from "react";
 import { LoginForm } from "@/components/login-form";
 
 export default function LoginPage() {
@@ -11,12 +14,13 @@ export default function LoginPage() {
                 T
               </span>
             </div>
-            <span className="text-xl font-bold text-foreground">
-              Tickly
-            </span>
+            <span className="text-xl font-bold text-foreground">Tickly</span>
           </div>
         </div>
-        <LoginForm />
+
+        <Suspense fallback={<div>Loading login form...</div>}>
+          <LoginForm />
+        </Suspense>
       </div>
     </main>
   );
