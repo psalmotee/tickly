@@ -11,9 +11,7 @@ export default function LoginPage() {
                 T
               </span>
             </div>
-            <span className="text-xl font-bold text-foreground">
-              Tickly
-            </span>
+            <span className="text-xl font-bold text-foreground">Tickly</span>
           </div>
         </div>
         <LoginForm />
