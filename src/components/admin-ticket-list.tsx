@@ -10,6 +10,7 @@ import {
 import { Modal } from "./modal";
 import { DeleteConfirmationModal } from "./delete-confirmation-modal";
 import { Trash2, ChevronDown, CheckCircle2 } from "lucide-react";
+import { toast } from "react-toastify"; // ✅ import toast
 
 export function AdminTicketList() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -38,6 +39,7 @@ export function AdminTicketList() {
     updateTicket(ticket.id, { status });
     loadTickets();
     setEditingId(null);
+    toast.success(`Ticket marked as ${getStatusLabel(status)} ✅`); // ✅ Toast for status change
   };
 
   const handleDeleteClick = (ticket: Ticket) => {
@@ -52,6 +54,7 @@ export function AdminTicketList() {
     loadTickets();
     setDeleteModal({ isOpen: false, ticket: null });
     setIsLoading(false);
+    toast.success("Ticket deleted successfully 🗑️"); // ✅ Toast for delete success
   };
 
   const getStatusColor = (status: string) => {
@@ -208,23 +211,22 @@ export function AdminTicketList() {
         </div>
       </div>
 
-     <Modal
-  isOpen={deleteModal.isOpen}
-  onClose={() => setDeleteModal({ isOpen: false, ticket: null })}
-  title="Delete Ticket"
->
-  {deleteModal.ticket && (
-    <DeleteConfirmationModal
-      title="Delete Ticket"
-      description="Are you sure you want to delete this ticket?"
-      itemName={deleteModal.ticket.title}
-      onConfirm={handleConfirmDelete}
-      onCancel={() => setDeleteModal({ isOpen: false, ticket: null })}
-      isLoading={isLoading}
-    />
-  )}
-</Modal>
-
+      <Modal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, ticket: null })}
+        title="Delete Ticket"
+      >
+        {deleteModal.ticket && (
+          <DeleteConfirmationModal
+            title="Delete Ticket"
+            description="Are you sure you want to delete this ticket?"
+            itemName={deleteModal.ticket.title}
+            onConfirm={handleConfirmDelete}
+            onCancel={() => setDeleteModal({ isOpen: false, ticket: null })}
+            isLoading={isLoading}
+          />
+        )}
+      </Modal>
     </>
   );
 }

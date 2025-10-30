@@ -39,7 +39,7 @@ export default function TicketsPage() {
             </button>
             <Link
               href="/dashboard"
-              className="flex-1 sm:flex-none inline-flex items-center justify-center rounded-lg border border-border px-4 py-2 font-medium text-foreground hover:bg-secondary transition-colors"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center rounded-lg border border-border px-4 py-2 font-medium text-foreground bg-primary/10 hover:bg-primary/20 hover:border-primary/50 transition-colors"
             >
               Dashboard
             </Link>

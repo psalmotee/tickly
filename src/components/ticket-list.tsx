@@ -7,6 +7,7 @@ import { TicketCard } from "./ticket-card";
 import { Modal } from "./modal";
 import { EditTicketForm } from "./edit-ticket-form";
 import { DeleteConfirmationModal } from "./delete-confirmation-modal";
+import { toast } from "react-toastify";
 
 interface TicketListProps {
   refreshTrigger: number;
@@ -39,14 +40,22 @@ export function TicketList({ refreshTrigger }: TicketListProps) {
   const handleConfirmDelete = () => {
     if (!selectedTicket) return;
     setIsDeleting(true);
-    deleteTicket(selectedTicket.id);
-    const session = getSession();
-    if (session) {
-      setTickets(getTicketsByUser(session.user.id));
+
+    try {
+      deleteTicket(selectedTicket.id);
+      const session = getSession();
+      if (session) {
+        setTickets(getTicketsByUser(session.user.id));
+      }
+
+      toast.success("Ticket deleted successfully 🗑️");
+    } catch (error) {
+      toast.error("Failed to delete ticket");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+      setSelectedTicket(null);
     }
-    setIsDeleting(false);
-    setIsDeleteModalOpen(false);
-    setSelectedTicket(null);
   };
 
   const handleEditSuccess = () => {
@@ -56,6 +65,7 @@ export function TicketList({ refreshTrigger }: TicketListProps) {
     if (session) {
       setTickets(getTicketsByUser(session.user.id));
     }
+    toast.success("Ticket updated successfully");
   };
 
   if (tickets.length === 0) {

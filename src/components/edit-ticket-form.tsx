@@ -5,6 +5,8 @@ import type React from "react";
 import { useState } from "react";
 import { updateTicket, type Ticket, type TicketStatus } from "@/lib/tickets";
 import { AlertCircle } from "lucide-react";
+import { toast } from "react-toastify";
+import { FormError } from "./form-error";
 
 interface EditTicketFormProps {
   ticket: Ticket;
@@ -38,6 +40,7 @@ export function EditTicketForm({ ticket, onSuccess }: EditTicketFormProps) {
 
     try {
       updateTicket(ticket.id, { title, description, status, priority });
+      toast.success("Ticket updated successfully!");
       onSuccess();
     } catch (err) {
       setError("Failed to update ticket");
@@ -48,13 +51,7 @@ export function EditTicketForm({ ticket, onSuccess }: EditTicketFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="flex gap-3 rounded-lg bg-destructive/10 p-3 border border-destructive/20">
-          <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-destructive">{error}</p>
-        </div>
-      )}
-
+      {error && <FormError message={error} />}
       <div>
         <label
           htmlFor="title"
@@ -87,50 +84,6 @@ export function EditTicketForm({ ticket, onSuccess }: EditTicketFormProps) {
           className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
           disabled={isLoading}
         />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label
-            htmlFor="status"
-            className="block text-sm font-medium text-foreground mb-2"
-          >
-            Status
-          </label>
-          <select
-            id="status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as TicketStatus)}
-            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            disabled={isLoading}
-          >
-            <option value="open">Open</option>
-            <option value="in-progress">In Progress</option>
-            <option value="closed">Closed</option>
-          </select>
-        </div>
-
-        <div>
-          <label
-            htmlFor="priority"
-            className="block text-sm font-medium text-foreground mb-2"
-          >
-            Priority
-          </label>
-          <select
-            id="priority"
-            value={priority}
-            onChange={(e) =>
-              setPriority(e.target.value as "low" | "medium" | "high")
-            }
-            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            disabled={isLoading}
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-        </div>
       </div>
 
       <button
