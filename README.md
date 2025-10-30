@@ -58,6 +58,8 @@ For testing purposes, use these credentials:
 ├── app/
 │   ├── layout.tsx           # Root layout with auth provider
 │   ├── page.tsx             # Landing page
+|   ├── admin/
+│   │   └── page.tsx         # Admin page
 │   ├── login/
 │   │   └── page.tsx         # Login page
 │   ├── signup/
@@ -170,26 +172,6 @@ The application includes:
 - Keyboard navigation support
 - Color contrast compliance
 - Screen reader friendly forms
-
-## Browser Support
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-
-## Future Enhancements
-
-Potential features for future versions:
-- Backend API integration
-- Database persistence
-- User roles and permissions
-- Team collaboration features
-- Ticket filtering and search
-- Advanced reporting and analytics
-- Email notifications
-- Dark mode toggle
-- Export functionality
 
 ## Troubleshooting
 

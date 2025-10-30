@@ -1,12 +1,10 @@
 "use client";
 
-import type React from "react";
-
-import { useState } from "react";
+import React, { useState } from "react";
+import { toast } from "react-toastify";
 import { createTicket } from "@/lib/tickets";
 import { getSession } from "@/lib/auth";
 import { validateTicketForm } from "@/lib/validation";
-import { FormError } from "./form-error";
 
 interface CreateTicketFormProps {
   onSuccess: () => void;
@@ -17,39 +15,31 @@ export function CreateTicketForm({ onSuccess }: CreateTicketFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
-  const [error, setError] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setFieldErrors({});
     setIsLoading(true);
 
     const validation = validateTicketForm(title, description);
-
     if (!validation.isValid) {
-      const errors: Record<string, string> = {};
-      validation.errors.forEach((err) => {
-        errors[err.field] = err.message;
-      });
-      setFieldErrors(errors);
+      validation.errors.forEach((err) => toast.error(err.message));
       setIsLoading(false);
       return;
     }
 
     if (!session) {
-      setError("Not authenticated");
+      toast.error("Not authenticated");
       setIsLoading(false);
       return;
     }
 
     try {
       createTicket(title, description, priority, session.user.id);
+      toast.success("Ticket created successfully!");
       onSuccess();
     } catch (err) {
-      setError("Failed to create ticket");
+      toast.error("Failed to create ticket");
     }
 
     setIsLoading(false);
@@ -57,69 +47,40 @@ export function CreateTicketForm({ onSuccess }: CreateTicketFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <FormError message={error} />}
-
+      {/* Inputs */}
       <div>
-        <label
-          htmlFor="title"
-          className="block text-sm font-medium text-foreground mb-2"
-        >
+        <label className="block text-sm font-medium text-foreground mb-2">
           Title
         </label>
         <input
-          id="title"
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Ticket title"
-          className={`w-full rounded-lg border px-4 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 ${
-            fieldErrors.title
-              ? "border-destructive bg-destructive/5"
-              : "border-input bg-background"
-          }`}
+          className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
           disabled={isLoading}
         />
-        {fieldErrors.title && (
-          <p className="text-xs text-destructive mt-1">{fieldErrors.title}</p>
-        )}
       </div>
 
       <div>
-        <label
-          htmlFor="description"
-          className="block text-sm font-medium text-foreground mb-2"
-        >
+        <label className="block text-sm font-medium text-foreground mb-2">
           Description
         </label>
         <textarea
-          id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Ticket description"
           rows={4}
-          className={`w-full rounded-lg border px-4 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none ${
-            fieldErrors.description
-              ? "border-destructive bg-destructive/5"
-              : "border-input bg-background"
-          }`}
+          className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
           disabled={isLoading}
         />
-        {fieldErrors.description && (
-          <p className="text-xs text-destructive mt-1">
-            {fieldErrors.description}
-          </p>
-        )}
       </div>
 
       <div>
-        <label
-          htmlFor="priority"
-          className="block text-sm font-medium text-foreground mb-2"
-        >
+        <label className="block text-sm font-medium text-foreground mb-2">
           Priority
         </label>
         <select
-          id="priority"
           value={priority}
           onChange={(e) =>
             setPriority(e.target.value as "low" | "medium" | "high")
