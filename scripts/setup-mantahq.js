@@ -5,14 +5,13 @@
  * Run with: node scripts/setup-mantahq.js
  */
 
-import { Manta } from "@mantahq/sdk";
+import { MantaClient } from "mantahq-sdk";
 
-const apiKey = process.env.NEXT_PUBLIC_MANTAHQ_API_KEY;
-const workspaceId = process.env.NEXT_PUBLIC_MANTAHQ_WORKSPACE_ID;
+const sdkKey = process.env.NEXT_PUBLIC_MANTAHQ_SDK_KEY;
 
-if (!apiKey || !workspaceId) {
+if (!sdkKey) {
   console.error(
-    "Error: Missing MantaHQ environment variables (NEXT_PUBLIC_MANTAHQ_API_KEY, NEXT_PUBLIC_MANTAHQ_WORKSPACE_ID)"
+    "Error: Missing MantaHQ environment variable (NEXT_PUBLIC_MANTAHQ_SDK_KEY)"
   );
   process.exit(1);
 }
@@ -20,9 +19,8 @@ if (!apiKey || !workspaceId) {
 async function setupDatabase() {
   try {
     console.log("Initializing MantaHQ client...");
-    const manta = new Manta({
-      apiKey,
-      workspaceId,
+    const manta = new MantaClient({
+      sdkKey,
     });
 
     console.log("Setting up 'users' table schema...");

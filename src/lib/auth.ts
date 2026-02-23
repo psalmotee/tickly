@@ -1,7 +1,7 @@
 "use client";
 
 // Authentication utility functions using MantaHQ
-import { Manta } from "@mantahq/sdk";
+import { MantaClient } from "mantahq-sdk";
 
 export interface User {
   id: string;
@@ -18,13 +18,12 @@ export interface AuthSession {
 const STORAGE_KEY = "Tickly_session";
 
 // Initialize MantaHQ SDK
-let mantaClient: Manta | null = null;
+let mantaClient: MantaClient | null = null;
 
-function getMantaClient(): Manta {
+function getMantaClient(): MantaClient {
   if (!mantaClient && typeof window !== "undefined") {
-    mantaClient = new Manta({
-      apiKey: process.env.NEXT_PUBLIC_MANTAHQ_API_KEY!,
-      workspaceId: process.env.NEXT_PUBLIC_MANTAHQ_WORKSPACE_ID!,
+    mantaClient = new MantaClient({
+      sdkKey: process.env.NEXT_PUBLIC_MANTAHQ_SDK_KEY!,
     });
   }
   return mantaClient!;

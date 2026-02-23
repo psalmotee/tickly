@@ -11,21 +11,19 @@ The application now uses MantaHQ for:
 
 ## Environment Setup
 
-You need to set the following environment variables in your `.env.local` file:
+You need to set the following environment variable in your `.env.local` file:
 
 ```env
-NEXT_PUBLIC_MANTAHQ_API_KEY=your_api_key_here
-NEXT_PUBLIC_MANTAHQ_WORKSPACE_ID=your_workspace_id_here
-MANTAHQ_SECRET_KEY=your_secret_key_here
+NEXT_PUBLIC_MANTAHQ_SDK_KEY=manta_sk_live_xxxx
 ```
 
-### Getting Your Credentials
+### Getting Your SDK Key
 
 1. Go to [MantaHQ Dashboard](https://app.mantahq.com)
 2. Create or sign into your workspace
-3. Navigate to **Settings** → **API Keys**
-4. Generate new API credentials and copy them
-5. Add them to your `.env.local` file
+3. Navigate to **Settings** → **API Keys** or **Keys & Authentication**
+4. Find or generate your SDK Key (starts with `manta_sk_live_`)
+5. Add it to your `.env.local` file as `NEXT_PUBLIC_MANTAHQ_SDK_KEY`
 
 ## Architecture
 
