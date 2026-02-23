@@ -5,14 +5,16 @@ import type React from "react";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { login, saveSession } from "@/lib/auth";
+import { login } from "@/lib/auth";
 import { validateLoginForm } from "@/lib/validation";
 import { FormError } from "./form-error";
 import { Eye } from "lucide-react";
+import { useAuth } from "./auth-provider";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { setSession } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -47,7 +49,7 @@ export function LoginForm() {
     const result = await login(email, password);
 
     if (result.success && result.session) {
-      saveSession(result.session);
+      setSession(result.session);
       router.push(
         result.session.user.role === "admin" ? "/admin" : "/dashboard"
       );

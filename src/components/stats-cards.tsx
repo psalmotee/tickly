@@ -1,11 +1,11 @@
 "use client";
 
 import { getTicketStats } from "@/lib/tickets";
-import { getSession } from "@/lib/auth";
 import { BarChart3, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { useAuth } from "./auth-provider";
 
 export function StatsCards() {
-  const session = getSession();
+  const { session } = useAuth();
   const stats = session
     ? getTicketStats(session.user.id)
     : { total: 0, open: 0, inProgress: 0, closed: 0 };

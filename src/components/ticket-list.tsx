@@ -2,18 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { getTicketsByUser, deleteTicket, type Ticket } from "@/lib/tickets";
-import { getSession } from "@/lib/auth";
 import { TicketCard } from "./ticket-card";
 import { Modal } from "./modal";
 import { EditTicketForm } from "./edit-ticket-form";
 import { DeleteConfirmationModal } from "./delete-confirmation-modal";
 import { toast } from "react-toastify";
+import { useAuth } from "./auth-provider";
 
 interface TicketListProps {
   refreshTrigger: number;
 }
 
 export function TicketList({ refreshTrigger }: TicketListProps) {
+  const { session } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -21,11 +22,10 @@ export function TicketList({ refreshTrigger }: TicketListProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    const session = getSession();
     if (session) {
       setTickets(getTicketsByUser(session.user.id));
     }
-  }, [refreshTrigger]);
+  }, [refreshTrigger, session]);
 
   const handleEdit = (ticket: Ticket) => {
     setSelectedTicket(ticket);

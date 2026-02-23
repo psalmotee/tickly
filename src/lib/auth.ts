@@ -1,5 +1,3 @@
-"use client";
-
 // Authentication utility functions using MantaHQ
 import { MantaClient } from "mantahq-sdk";
 
@@ -15,8 +13,6 @@ export interface AuthSession {
   token: string;
 }
 
-const STORAGE_KEY = "Tickly_session";
-
 // Initialize MantaHQ SDK
 let mantaClient: MantaClient | null = null;
 
@@ -27,28 +23,6 @@ function getMantaClient(): MantaClient {
     });
   }
   return mantaClient!;
-}
-
-export function saveSession(session: AuthSession): void {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-  }
-}
-
-export function getSession(): AuthSession | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const session = localStorage.getItem(STORAGE_KEY);
-    return session ? JSON.parse(session) : null;
-  } catch {
-    return null;
-  }
-}
-
-export function clearSession(): void {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem(STORAGE_KEY);
-  }
 }
 
 export async function signup(
@@ -141,11 +115,9 @@ export async function logout(): Promise<{
   try {
     const manta = getMantaClient();
     await manta.auth.signOut();
-    clearSession();
     return { success: true };
   } catch (error: any) {
     console.error("[v0] Logout error:", error);
-    clearSession(); // Still clear local session even if API call fails
     return { success: true };
   }
 }

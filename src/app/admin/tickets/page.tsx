@@ -2,23 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getSession } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { AdminHeader } from "@/components/admin-header";
 import { AdminTicketList } from "@/components/admin-ticket-list";
+import { useAuth } from "@/components/auth-provider";
 
 export default function AdminTicketsPage() {
   const router = useRouter();
+  const { session, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const session = getSession();
+    if (loading) return;
     if (!session || !isAdmin(session)) {
       router.push("/dashboard");
       return;
     }
     setIsLoading(false);
-  }, [router]);
+  }, [router, session, loading]);
 
   if (isLoading) {
     return (

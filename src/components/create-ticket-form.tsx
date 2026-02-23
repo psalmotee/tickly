@@ -3,15 +3,15 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { createTicket } from "@/lib/tickets";
-import { getSession } from "@/lib/auth";
 import { validateTicketForm } from "@/lib/validation";
+import { useAuth } from "./auth-provider";
 
 interface CreateTicketFormProps {
   onSuccess: () => void;
 }
 
 export function CreateTicketForm({ onSuccess }: CreateTicketFormProps) {
-  const session = getSession();
+  const { session } = useAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");

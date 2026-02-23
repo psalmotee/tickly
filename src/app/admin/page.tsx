@@ -2,30 +2,31 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getSession } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { getAllTicketsStats } from "@/lib/tickets";
 import { AdminHeader } from "@/components/admin-header";
 import { AdminStats } from "@/components/admin-stats";
 import Link from "next/link";
 import { TrendingUp, Users, Ticket } from "lucide-react";
+import { useAuth } from "@/components/auth-provider";
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const { session, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<ReturnType<
     typeof getAllTicketsStats
   > | null>(null);
 
   useEffect(() => {
-    const session = getSession();
+    if (loading) return;
     if (!session || !isAdmin(session)) {
       router.push("/dashboard");
       return;
     }
     setStats(getAllTicketsStats());
     setIsLoading(false);
-  }, [router]);
+  }, [router, session, loading]);
 
   if (isLoading || !stats) {
     return (

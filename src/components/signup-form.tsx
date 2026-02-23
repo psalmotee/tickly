@@ -5,13 +5,15 @@ import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signup, login, saveSession } from "@/lib/auth";
+import { signup, login } from "@/lib/auth";
 import { validateSignupForm } from "@/lib/validation";
 import { FormError } from "./form-error";
 import { Eye } from "lucide-react";
+import { useAuth } from "./auth-provider";
 
 export function SignupForm() {
   const router = useRouter();
+  const { setSession } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,7 +59,7 @@ export function SignupForm() {
     const loginResult = await login(email, password);
 
     if (loginResult.success && loginResult.session) {
-      saveSession(loginResult.session);
+      setSession(loginResult.session);
       router.push("/dashboard");
     } else {
       setError("Signup successful, but login failed. Please try logging in.");
