@@ -45,10 +45,7 @@ export function SignupForm() {
       return;
     }
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    const signupResult = signup(email, password, name);
+    const signupResult = await signup(email, password, name);
 
     if (!signupResult.success) {
       setError(signupResult.error || "Signup failed");
@@ -57,7 +54,7 @@ export function SignupForm() {
     }
 
     // Auto-login after signup
-    const loginResult = login(email, password);
+    const loginResult = await login(email, password);
 
     if (loginResult.success && loginResult.session) {
       saveSession(loginResult.session);

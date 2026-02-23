@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { clearSession, getSession } from "@/lib/auth";
+import { logout, getSession } from "@/lib/auth";
 import { LogOut, Menu, LayoutDashboard } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
@@ -11,8 +11,8 @@ export function AdminHeader() {
   const session = getSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    clearSession();
+  const handleLogout = async () => {
+    await logout();
     router.push("/");
   };
 

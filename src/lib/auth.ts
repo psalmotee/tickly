@@ -1,4 +1,7 @@
-// Authentication utility functions using localStorage
+"use client";
+
+// Authentication utility functions using MantaHQ
+import { Manta } from "@mantahq/sdk";
 
 export interface User {
   id: string;
@@ -14,11 +17,27 @@ export interface AuthSession {
 
 const STORAGE_KEY = "Tickly_session";
 
+// Initialize MantaHQ SDK
+let mantaClient: Manta | null = null;
+
+function getMantaClient(): Manta {
+  if (!mantaClient && typeof window !== "undefined") {
+    mantaClient = new Manta({
+      apiKey: process.env.NEXT_PUBLIC_MANTAHQ_API_KEY!,
+      workspaceId: process.env.NEXT_PUBLIC_MANTAHQ_WORKSPACE_ID!,
+    });
+  }
+  return mantaClient!;
+}
+
 export function saveSession(session: AuthSession): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  }
 }
 
 export function getSession(): AuthSession | null {
+  if (typeof window === "undefined") return null;
   try {
     const session = localStorage.getItem(STORAGE_KEY);
     return session ? JSON.parse(session) : null;
@@ -28,94 +47,128 @@ export function getSession(): AuthSession | null {
 }
 
 export function clearSession(): void {
-  localStorage.removeItem(STORAGE_KEY);
-}
-
-export function generateToken(): string {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
-}
-
-export function validateEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-export function validatePassword(password: string): string | null {
-  if (password.length < 6) {
-    return "Password must be at least 6 characters";
-  }
-  return null;
-}
-
-// Mock user database (in real app, this would be a backend)
-const users: Map<
-  string,
-  { email: string; password: string; name: string; role: "user" | "admin" }
-> = new Map();
-
-// Initialize with demo admin account
-if (typeof window !== "undefined") {
-  const existingUsers = localStorage.getItem("Tickly_users");
-  if (!existingUsers) {
-    users.set("admin@example.com", {
-      email: "admin@example.com",
-      password: "admin123",
-      name: "Admin User",
-      role: "admin",
-    });
-    users.set("demo@example.com", {
-      email: "demo@example.com",
-      password: "demo123",
-      name: "Demo User",
-      role: "user",
-    });
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(STORAGE_KEY);
   }
 }
 
-export function signup(
+export async function signup(
   email: string,
   password: string,
   name: string
-): { success: boolean; error?: string } {
-  if (users.has(email)) {
-    return { success: false, error: "Email already registered" };
-  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const manta = getMantaClient();
 
-  users.set(email, { email, password, name, role: "user" });
-  return { success: true };
+    // Create user account with MantaHQ
+    const authResponse = await manta.auth.signUp({
+      email,
+      password,
+    });
+
+    if (!authResponse.user) {
+      return { success: false, error: "Failed to create account" };
+    }
+
+    // Store additional user data in MantaHQ database
+    const usersTable = manta.db.collection("users");
+    await usersTable.insert({
+      id: authResponse.user.id,
+      email,
+      name,
+      role: "user",
+      createdAt: new Date().toISOString(),
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("[v0] Signup error:", error);
+    return {
+      success: false,
+      error:
+        error?.message ||
+        "Signup failed. Please try again.",
+    };
+  }
 }
 
-export function login(
+export async function login(
   email: string,
   password: string
-): { success: boolean; session?: AuthSession; error?: string } {
-  const user = users.get(email);
+): Promise<{ success: boolean; session?: AuthSession; error?: string }> {
+  try {
+    const manta = getMantaClient();
 
-  if (!user || user.password !== password) {
-    return { success: false, error: "Invalid email or password" };
+    // Sign in with MantaHQ
+    const authResponse = await manta.auth.signIn({
+      email,
+      password,
+    });
+
+    if (!authResponse.user || !authResponse.token) {
+      return { success: false, error: "Invalid email or password" };
+    }
+
+    // Fetch user profile from database
+    const usersTable = manta.db.collection("users");
+    const userProfile = await usersTable.findOne({ email });
+
+    const session: AuthSession = {
+      user: {
+        id: authResponse.user.id,
+        email: authResponse.user.email,
+        name: userProfile?.name || authResponse.user.email,
+        role: userProfile?.role || "user",
+      },
+      token: authResponse.token,
+    };
+
+    return { success: true, session };
+  } catch (error: any) {
+    console.error("[v0] Login error:", error);
+    return {
+      success: false,
+      error:
+        error?.message ||
+        "Login failed. Please check your credentials.",
+    };
   }
-
-  const session: AuthSession = {
-    user: {
-      id: email,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-    },
-    token: generateToken(),
-  };
-
-  return { success: true, session };
 }
 
-export function getAllUsers(): Array<{
-  email: string;
-  name: string;
-  role: "user" | "admin";
+export async function logout(): Promise<{
+  success: boolean;
+  error?: string;
 }> {
-  return Array.from(users.values()).map(({ email, name, role }) => ({
-    email,
-    name,
-    role,
-  }));
+  try {
+    const manta = getMantaClient();
+    await manta.auth.signOut();
+    clearSession();
+    return { success: true };
+  } catch (error: any) {
+    console.error("[v0] Logout error:", error);
+    clearSession(); // Still clear local session even if API call fails
+    return { success: true };
+  }
+}
+
+export async function getAllUsers(): Promise<
+  Array<{
+    email: string;
+    name: string;
+    role: "user" | "admin";
+  }>
+> {
+  try {
+    const manta = getMantaClient();
+    const usersTable = manta.db.collection("users");
+    const users = await usersTable.find({});
+    return users.map(({ email, name, role }) => ({
+      email,
+      name,
+      role,
+    }));
+  } catch (error) {
+    console.error("[v0] Failed to fetch users:", error);
+    return [];
+  }
 }
