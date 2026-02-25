@@ -5,14 +5,16 @@ import type React from "react";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { login, saveSession } from "@/lib/auth";
+import { login } from "@/lib/auth";
 import { validateLoginForm } from "@/lib/validation";
 import { FormError } from "./form-error";
 import { Eye } from "lucide-react";
+import { useAuth } from "./auth-provider";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { setSession } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -24,10 +26,6 @@ export function LoginForm() {
   useEffect(() => {
     const adminParam = searchParams.get("admin");
     setIsAdmin(adminParam === "true");
-    if (adminParam === "true") {
-      setEmail("admin@example.com");
-      setPassword("admin123");
-    }
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,13 +46,10 @@ export function LoginForm() {
       return;
     }
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    const result = login(email, password);
+    const result = await login(email, password);
 
     if (result.success && result.session) {
-      saveSession(result.session);
+      setSession(result.session);
       router.push(
         result.session.user.role === "admin" ? "/admin" : "/dashboard"
       );
@@ -180,32 +175,6 @@ export function LoginForm() {
             </>
           )}
         </p>
-      </div>
-
-      <div className="mt-6 rounded-lg border border-border bg-secondary/30 p-4">
-        <p className="text-xs font-medium text-muted-foreground mb-2">
-          {isAdmin ? "Admin Demo Credentials:" : "Demo Credentials:"}
-        </p>
-        {isAdmin ? (
-          <>
-            <p className="text-xs text-muted-foreground">
-              Email: admin@example.com
-            </p>
-            <p className="text-xs text-muted-foreground">Password: admin123</p>
-          </>
-        ) : (
-          <>
-            <p className="text-xs text-muted-foreground">
-              Email: demo@example.com
-            </p>
-              <p className="text-xs text-muted-foreground">Password: demo123</p>
-              <hr className="m-2"/>
-            <p className="text-xs text-muted-foreground">
-              Email: admin@example.com
-            </p>
-            <p className="text-xs text-muted-foreground">Password: admin123</p>
-          </>
-        )}
       </div>
     </div>
   );

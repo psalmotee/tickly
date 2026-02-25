@@ -1,18 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { clearSession, getSession } from "@/lib/auth";
+import { logout } from "@/lib/auth";
 import { LogOut, Menu, LayoutDashboard } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import { useAuth } from "./auth-provider";
 
 export function AdminHeader() {
   const router = useRouter();
-  const session = getSession();
+  const { session, setSession } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    clearSession();
+  const handleLogout = async () => {
+    await logout();
+    setSession(null);
     router.push("/");
   };
 
@@ -27,9 +29,7 @@ export function AdminHeader() {
                   T
                 </span>
               </div>
-              <span className="text-xl font-bold text-foreground">
-                Tickly
-              </span>
+              <span className="text-xl font-bold text-foreground">Tickly</span>
             </div>
             <div className="hidden sm:flex items-center gap-2 ml-4 pl-4 border-l border-border">
               <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">

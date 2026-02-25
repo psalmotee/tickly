@@ -10,7 +10,11 @@ export function AdminUsersList() {
   >([]);
 
   useEffect(() => {
-    setUsers(getAllUsers());
+    const fetchUsers = async () => {
+      const usersData = await getAllUsers();
+      setUsers(usersData);
+    };
+    fetchUsers();
   }, []);
 
   return (

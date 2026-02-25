@@ -1,18 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { clearSession, getSession } from "@/lib/auth";
+import { logout } from "@/lib/auth";
 import { LogOut, Menu } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import { useAuth } from "./auth-provider";
 
 export function DashboardHeader() {
   const router = useRouter();
-  const session = getSession();
+  const { session, setSession } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    clearSession();
+  const handleLogout = async () => {
+    await logout();
+    setSession(null);
     router.push("/");
   };
 
@@ -26,9 +28,7 @@ export function DashboardHeader() {
                 T
               </span>
             </div>
-            <span className="text-xl font-bold text-foreground">
-              Tickly
-            </span>
+            <span className="text-xl font-bold text-foreground">Tickly</span>
           </div>
 
           <div className="hidden sm:flex items-center gap-4">

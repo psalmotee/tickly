@@ -5,14 +5,16 @@ import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signup, login, saveSession } from "@/lib/auth";
+import { signup, login } from "@/lib/auth";
 import { validateSignupForm } from "@/lib/validation";
 import { FormError } from "./form-error";
 import { Eye } from "lucide-react";
+import { useAuth } from "./auth-provider";
 
 export function SignupForm() {
   const router = useRouter();
-  const [name, setName] = useState("");
+  const { setSession } = useAuth();
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -29,7 +31,7 @@ export function SignupForm() {
     setIsLoading(true);
 
     const validation = validateSignupForm(
-      name,
+      fullName,
       email,
       password,
       confirmPassword
@@ -45,10 +47,7 @@ export function SignupForm() {
       return;
     }
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    const signupResult = signup(email, password, name);
+    const signupResult = await signup(fullName, email, password, confirmPassword);
 
     if (!signupResult.success) {
       setError(signupResult.error || "Signup failed");
@@ -57,10 +56,10 @@ export function SignupForm() {
     }
 
     // Auto-login after signup
-    const loginResult = login(email, password);
+    const loginResult = await login(email, password);
 
     if (loginResult.success && loginResult.session) {
-      saveSession(loginResult.session);
+      setSession(loginResult.session);
       router.push("/dashboard");
     } else {
       setError("Signup successful, but login failed. Please try logging in.");
@@ -92,8 +91,8 @@ export function SignupForm() {
             <input
               id="name"
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
               placeholder="John Doe"
               className={`w-full rounded-lg border px-4 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 ${
                 fieldErrors.name
