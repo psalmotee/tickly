@@ -1,93 +1,211 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getAllUsers } from "@/lib/auth";
-import { Shield, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import {
+  User as UserIcon,
+  Search,
+  ShieldCheck,
+  ShieldAlert,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
-export function AdminUsersList() {
-  const [users, setUsers] = useState<
-    Array<{ email: string; name: string; role: "user" | "admin" }>
-  >([]);
+interface AdminUser {
+  id: string;
+  fullName?: string;
+  email?: string;
+  role: "admin" | "user";
+}
+
+interface PaginationMeta {
+  page: number;
+  totalPages: number;
+}
+
+export function AdminUserList() {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [meta, setMeta] = useState<PaginationMeta>({ page: 1, totalPages: 1 });
+
+  // Function to fetch data
+  const fetchUsers = async (page: number, query: string = "") => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(
+        `/api/admin/users?page=${page}&query=${encodeURIComponent(query)}`,
+      );
+      const data = await res.json();
+      if (data.success) {
+        setUsers(data.users);
+        setMeta(data.meta ?? { page: 1, totalPages: 1 });
+      } else {
+        toast.error(data.error || "Failed to load users");
+      }
+    } catch {
+      toast.error("An error occurred while fetching users");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      const usersData = await getAllUsers();
-      setUsers(usersData);
-    };
-    fetchUsers();
+    fetchUsers(1, "");
   }, []);
 
+  // Effect for Debounced Search
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchUsers(1, searchQuery); // Always reset to page 1 on new search
+    }, 400); // Wait 400ms after user stops typing
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  const handleToggleRole = async (userId: string, currentRole: string) => {
+    const newRole = currentRole === "admin" ? "user" : "admin";
+
+    // Confirmation for promotion
+    if (
+      newRole === "admin" &&
+      !confirm("Promote this user to Admin? They will have full access.")
+    )
+      return;
+
+    setUpdatingId(userId);
+    try {
+      const res = await fetch("/api/admin/users/update-role", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, newRole }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        // Update local state so the UI refreshes immediately
+        setUsers((prevUsers) =>
+          prevUsers.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
+        );
+        toast.success(`User is now an ${newRole}`);
+      } else {
+        toast.error(data.error);
+      }
+    } catch {
+      toast.error("Failed to update role");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  if (isLoading) return <div className="p-8 text-center">Loading users...</div>;
+
   return (
-    <div className="rounded-lg border border-border bg-card overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="space-y-4">
+      {/* Search Bar */}
+      <div className="relative max-w-sm">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          ) : (
+            <Search className="h-4 w-4 text-muted-foreground" />
+          )}
+        </div>
+        <input
+          type="text"
+          placeholder="Search name or email..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="block w-full pl-10 pr-3 py-2 border border-border rounded-md bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+        />
+      </div>
+
+      {/* Table */}
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
         <table className="w-full">
-          <thead>
-            <tr className="border-b border-border bg-secondary/50">
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">
-                Role
-              </th>
-              <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={4}
-                  className="px-6 py-8 text-center text-muted-foreground"
-                >
-                  No users found
+          {/* ... Table Header ... */}
+          <tbody className="divide-y divide-border">
+            {users.map((user) => (
+              <tr
+                key={user.id}
+                className="hover:bg-secondary/20 transition-colors"
+              >
+                <td className="px-6 py-4 flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <UserIcon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {user.fullName || "Unknown User"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {user.email || "No email"}
+                    </p>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold ${
+                      user.role === "admin"
+                        ? "bg-red-500/10 text-red-600"
+                        : "bg-blue-500/10 text-blue-600"
+                    }`}
+                  >
+                    {user.role === "admin" ? (
+                      <ShieldAlert className="h-3 w-3" />
+                    ) : (
+                      <ShieldCheck className="h-3 w-3" />
+                    )}
+                    {user.role.toUpperCase()}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <button
+                    disabled={updatingId === user.id}
+                    onClick={() => handleToggleRole(user.id, user.role)}
+                    className="inline-flex items-center gap-2 text-xs font-semibold text-primary hover:text-primary/80 disabled:opacity-50"
+                  >
+                    {updatingId === user.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : user.role === "admin" ? (
+                      "Demote to User"
+                    ) : (
+                      "Promote to Admin"
+                    )}
+                  </button>
                 </td>
               </tr>
-            ) : (
-              users.map((user) => (
-                <tr
-                  key={user.email}
-                  className="border-b border-border hover:bg-secondary/30 transition-colors"
-                >
-                  <td className="px-6 py-4 font-medium text-foreground">
-                    {user.name}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {user.email}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="inline-flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-1">
-                      {user.role === "admin" ? (
-                        <>
-                          <Shield className="h-4 w-4 text-primary" />
-                          <span className="text-sm font-medium text-primary">
-                            Admin
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium text-muted-foreground">
-                            User
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="inline-flex items-center rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-700">
-                      Active
-                    </span>
-                  </td>
-                </tr>
-              ))
-            )}
+            ))}
           </tbody>
         </table>
+      </div>
+      {/* Pagination Controls */}
+      <div className="flex items-center justify-between px-2 py-4">
+        <p className="text-sm text-muted-foreground">
+          Page <strong>{meta.page}</strong> of{" "}
+          <strong>{meta.totalPages}</strong>
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => fetchUsers(meta.page - 1, searchQuery)}
+            disabled={meta.page <= 1 || isLoading}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-border bg-background text-sm font-medium hover:bg-secondary disabled:opacity-50 transition-colors"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </button>
+          <button
+            onClick={() => fetchUsers(meta.page + 1, searchQuery)}
+            disabled={meta.page >= meta.totalPages || isLoading}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md border border-border bg-background text-sm font-medium hover:bg-secondary disabled:opacity-50 transition-colors"
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

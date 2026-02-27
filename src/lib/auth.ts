@@ -26,11 +26,12 @@ export async function signup(
 export async function login(
   email: string,
   password: string,
+  fullname?: string,
 ) {
   const res = await fetch("/api/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password}),
+    body: JSON.stringify({ email, password, fullname }),
   });
 
   return res.json();

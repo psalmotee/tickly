@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import { useAuth } from "@/components/auth-provider";
 import { isAdmin } from "@/lib/admin";
 import { getAllTicketsStats } from "@/lib/tickets";
 import { AdminHeader } from "@/components/admin-header";
@@ -12,22 +11,14 @@ import { TrendingUp, Users, Ticket } from "lucide-react";
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState<ReturnType<
-    typeof getAllTicketsStats
-  > | null>(null);
+  const { session, loading } = useAuth();
 
-  useEffect(() => {
-    const session = getSession();
-    if (!session || !isAdmin(session)) {
-      router.push("/dashboard");
-      return;
-    }
-    setStats(getAllTicketsStats());
-    setIsLoading(false);
-  }, [router]);
+  if (!loading && (!session || !isAdmin(session))) {
+    router.push("/dashboard");
+    return null;
+  }
 
-  if (isLoading || !stats) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -37,6 +28,8 @@ export default function AdminDashboard() {
       </div>
     );
   }
+
+  const stats = getAllTicketsStats();
 
   return (
     <div className="min-h-screen bg-background">
@@ -61,7 +54,7 @@ export default function AdminDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
           <Link
-            href="/admin/tickets"
+            href=""
             className="rounded-lg border border-border bg-card p-6 hover:border-primary/50 hover:bg-secondary/30 transition-all group"
           >
             <div className="flex items-center justify-between">
@@ -78,7 +71,7 @@ export default function AdminDashboard() {
           </Link>
 
           <Link
-            href="/admin/users"
+            href=""
             className="rounded-lg border border-border bg-card p-6 hover:border-primary/50 hover:bg-secondary/30 transition-all group"
           >
             <div className="flex items-center justify-between">

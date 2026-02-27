@@ -63,7 +63,7 @@ export function AdminHeader() {
 
             <div className="flex flex-col items-end">
               <p className="text-sm font-medium text-foreground">
-                {session?.user.name}
+                {session?.user.fullName || session?.user.email}
               </p>
               <p className="text-xs text-muted-foreground">Admin</p>
             </div>
@@ -109,7 +109,7 @@ export function AdminHeader() {
             </nav>
             <div className="px-2 py-2 border-t border-border">
               <p className="text-sm font-medium text-foreground">
-                {session?.user.name}
+                {session?.user.fullName || session?.user.email}
               </p>
               <p className="text-xs text-muted-foreground">Admin</p>
             </div>

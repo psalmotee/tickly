@@ -42,7 +42,7 @@ export function DashboardHeader() {
             )}
             <div className="flex flex-col items-end">
               <p className="text-sm font-medium text-foreground">
-                {session?.user.name}
+                {session?.user.fullName || session?.user.email}
               </p>
               <p className="text-xs text-muted-foreground">
                 {session?.user.email}
@@ -69,7 +69,7 @@ export function DashboardHeader() {
           <div className="sm:hidden border-t border-border py-4 space-y-3">
             <div className="px-2">
               <p className="text-sm font-medium text-foreground">
-                {session?.user.name}
+                {session?.user.fullName || session?.user.email}
               </p>
               <p className="text-xs text-muted-foreground">
                 {session?.user.email}

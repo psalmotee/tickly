@@ -1,26 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import { useAuth } from "@/components/auth-provider";
 import { isAdmin } from "@/lib/admin";
 import { AdminHeader } from "@/components/admin-header";
-import { AdminUsersList } from "@/components/admin-users-list";
+import { AdminUserList } from "@/components/admin-users-list";
 
 export default function AdminUsersPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
+  const { session, loading } = useAuth();
 
-  useEffect(() => {
-    const session = getSession();
-    if (!session || !isAdmin(session)) {
-      router.push("/dashboard");
-      return;
-    }
-    setIsLoading(false);
-  }, [router]);
+  if (!loading && (!session || !isAdmin(session))) {
+    router.push("/dashboard");
+    return null;
+  }
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -43,7 +38,7 @@ export default function AdminUsersPage() {
           </p>
         </div>
 
-        <AdminUsersList />
+        <AdminUserList />
       </main>
     </div>
   );

@@ -43,13 +43,12 @@ export function TicketList({ refreshTrigger }: TicketListProps) {
 
     try {
       deleteTicket(selectedTicket.id);
-      const session = getSession();
       if (session) {
         setTickets(getTicketsByUser(session.user.id));
       }
 
       toast.success("Ticket deleted successfully 🗑️");
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete ticket");
     } finally {
       setIsDeleting(false);
@@ -61,7 +60,6 @@ export function TicketList({ refreshTrigger }: TicketListProps) {
   const handleEditSuccess = () => {
     setIsEditModalOpen(false);
     setSelectedTicket(null);
-    const session = getSession();
     if (session) {
       setTickets(getTicketsByUser(session.user.id));
     }

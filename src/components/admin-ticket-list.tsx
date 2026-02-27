@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   getAllTickets,
   updateTicket,
@@ -9,11 +9,11 @@ import {
 } from "@/lib/tickets";
 import { Modal } from "./modal";
 import { DeleteConfirmationModal } from "./delete-confirmation-modal";
-import { Trash2, ChevronDown, CheckCircle2 } from "lucide-react";
+import { Trash2, ChevronDown, CheckCircle2, Link } from "lucide-react";
 import { toast } from "react-toastify"; // ✅ import toast
 
 export function AdminTicketList() {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>(() => getAllTickets());
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     ticket: Ticket | null;
@@ -24,17 +24,13 @@ export function AdminTicketList() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    loadTickets();
-  }, []);
-
-  const loadTickets = () => {
+  function loadTickets() {
     setTickets(getAllTickets());
-  };
+  }
 
   const handleStatusChange = (
     ticket: Ticket,
-    status: "open" | "in-progress" | "closed"
+    status: "open" | "in-progress" | "closed",
   ) => {
     updateTicket(ticket.id, { status });
     loadTickets();
@@ -150,11 +146,11 @@ export function AdminTicketList() {
                         <button
                           onClick={() =>
                             setEditingId(
-                              editingId === ticket.id ? null : ticket.id
+                              editingId === ticket.id ? null : ticket.id,
                             )
                           }
                           className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1 text-xs font-medium transition-colors ${getStatusColor(
-                            ticket.status
+                            ticket.status,
                           )}`}
                         >
                           {ticket.status === "closed" && (
@@ -176,7 +172,7 @@ export function AdminTicketList() {
                                 >
                                   {getStatusLabel(status)}
                                 </button>
-                              )
+                              ),
                             )}
                           </div>
                         )}
@@ -185,7 +181,7 @@ export function AdminTicketList() {
                     <td className="px-6 py-4">
                       <span
                         className={`text-sm font-medium capitalize ${getPriorityColor(
-                          ticket.priority
+                          ticket.priority,
                         )}`}
                       >
                         {ticket.priority}
@@ -203,6 +199,14 @@ export function AdminTicketList() {
                         Delete
                       </button>
                     </td>
+
+                    {/* new add */}
+                    <Link
+                      href={`/admin/tickets/${ticket.id}`}
+                      className="hover:underline font-medium text-foreground"
+                    >
+                      {ticket.title}
+                    </Link>
                   </tr>
                 ))
               )}
