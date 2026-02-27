@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import NextLink from "next/link";
 import {
   getAllTickets,
   updateTicket,
@@ -9,7 +10,7 @@ import {
 } from "@/lib/tickets";
 import { Modal } from "./modal";
 import { DeleteConfirmationModal } from "./delete-confirmation-modal";
-import { Trash2, ChevronDown, CheckCircle2, Link } from "lucide-react";
+import { Trash2, ChevronDown, CheckCircle2 } from "lucide-react";
 import { toast } from "react-toastify"; // ✅ import toast
 
 export function AdminTicketList() {
@@ -130,9 +131,12 @@ export function AdminTicketList() {
                   >
                     <td className="px-6 py-4">
                       <div>
-                        <p className="font-medium text-foreground">
+                        <NextLink
+                          href={`/admin/tickets/${ticket.id}`}
+                          className="font-medium text-foreground hover:underline"
+                        >
                           {ticket.title}
-                        </p>
+                        </NextLink>
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
                           {ticket.description}
                         </p>
@@ -199,14 +203,6 @@ export function AdminTicketList() {
                         Delete
                       </button>
                     </td>
-
-                    {/* new add */}
-                    <Link
-                      href={`/admin/tickets/${ticket.id}`}
-                      className="hover:underline font-medium text-foreground"
-                    >
-                      {ticket.title}
-                    </Link>
                   </tr>
                 ))
               )}

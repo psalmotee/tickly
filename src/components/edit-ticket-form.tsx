@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { useState } from "react";
-import { updateTicket, type Ticket, type TicketStatus } from "@/lib/tickets";
+import { type Ticket, type TicketStatus } from "@/lib/tickets";
 import { AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import { FormError } from "./form-error";
@@ -39,10 +39,28 @@ export function EditTicketForm({ ticket, onSuccess }: EditTicketFormProps) {
     }
 
     try {
-      updateTicket(ticket.id, { title, description, status, priority });
+      const res = await fetch(`/api/tickets/${ticket.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          status,
+          priority,
+          updatedAt: new Date().toISOString(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.error || "Failed to update ticket");
+        setIsLoading(false);
+        return;
+      }
+
       toast.success("Ticket updated successfully!");
       onSuccess();
-    } catch (err) {
+    } catch {
       setError("Failed to update ticket");
     }
 

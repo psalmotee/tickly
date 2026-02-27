@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getTicketsByUser, deleteTicket, type Ticket } from "@/lib/tickets";
+import { type Ticket } from "@/lib/tickets";
 import { TicketCard } from "./ticket-card";
 import { Modal } from "./modal";
 import { EditTicketForm } from "./edit-ticket-form";
@@ -21,9 +21,26 @@ export function TicketList({ refreshTrigger }: TicketListProps) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const loadTickets = async () => {
+    if (!session) return;
+
+    try {
+      const res = await fetch(`/api/tickets?userId=${session.user.id}`);
+      const data = await res.json();
+
+      if (data.success) {
+        setTickets(data.tickets || []);
+      } else {
+        toast.error(data.error || "Failed to load tickets");
+      }
+    } catch {
+      toast.error("Failed to load tickets");
+    }
+  };
+
   useEffect(() => {
     if (session) {
-      setTickets(getTicketsByUser(session.user.id));
+      void loadTickets();
     }
   }, [refreshTrigger, session]);
 
@@ -41,27 +58,35 @@ export function TicketList({ refreshTrigger }: TicketListProps) {
     if (!selectedTicket) return;
     setIsDeleting(true);
 
-    try {
-      deleteTicket(selectedTicket.id);
-      if (session) {
-        setTickets(getTicketsByUser(session.user.id));
-      }
+    fetch(`/api/tickets/${selectedTicket.id}`, { method: "DELETE" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.success) {
+          toast.error(data.error || "Failed to delete ticket");
+          return;
+        }
 
-      toast.success("Ticket deleted successfully 🗑️");
-    } catch {
-      toast.error("Failed to delete ticket");
-    } finally {
-      setIsDeleting(false);
-      setIsDeleteModalOpen(false);
-      setSelectedTicket(null);
-    }
+        if (session) {
+          void loadTickets();
+        }
+
+        toast.success("Ticket deleted successfully 🗑️");
+      })
+      .catch(() => {
+        toast.error("Failed to delete ticket");
+      })
+      .finally(() => {
+        setIsDeleting(false);
+        setIsDeleteModalOpen(false);
+        setSelectedTicket(null);
+      });
   };
 
   const handleEditSuccess = () => {
     setIsEditModalOpen(false);
     setSelectedTicket(null);
     if (session) {
-      setTickets(getTicketsByUser(session.user.id));
+      void loadTickets();
     }
     toast.success("Ticket updated successfully");
   };

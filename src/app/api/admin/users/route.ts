@@ -12,13 +12,13 @@ interface QueryMeta {
 interface RawUserRecord {
   id?: string;
   user_id?: string;
+  _id?: string;
   email?: string;
   fullName?: string;
   fullname?: string;
   first_name?: string;
   last_name?: string;
   role?: "admin" | "user";
-  createdAt?: string;
 }
 
 function normalizeRole(role?: string): "admin" | "user" {
@@ -39,11 +39,9 @@ export async function GET(req: Request) {
   try {
     const options: FetchAllRecordsParams = {
       table: "tickly-auth",
-      fields: ["id", "fullname", "email", "role", "createdAt"],
+      fields: ["id", "fullname", "email", "role"],
       page,
       list: limit,
-      orderBy: "createdAt",
-      order: "desc",
     };
 
     if (query) {
@@ -69,7 +67,6 @@ export async function GET(req: Request) {
           ? `${user.first_name} ${user.last_name || ""}`.trim()
           : ""),
       role: normalizeRole(user.role),
-      createdAt: user.createdAt || null,
     }));
 
     return NextResponse.json({

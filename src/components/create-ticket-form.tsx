@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import { createTicket } from "@/lib/tickets";
 import { validateTicketForm } from "@/lib/validation";
 import { useAuth } from "./auth-provider";
 
@@ -35,10 +34,27 @@ export function CreateTicketForm({ onSuccess }: CreateTicketFormProps) {
     }
 
     try {
-      createTicket(title, description, priority, session.user.id);
+      const res = await fetch("/api/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          priority,
+          userId: session.user.id,
+        }),
+      });
+
+      const result = await res.json();
+      if (!result.success) {
+        toast.error(result.error || "Failed to create ticket");
+        setIsLoading(false);
+        return;
+      }
+
       toast.success("Ticket created successfully!");
       onSuccess();
-    } catch (err) {
+    } catch {
       toast.error("Failed to create ticket");
     }
 

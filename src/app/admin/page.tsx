@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { isAdmin } from "@/lib/admin";
@@ -13,10 +14,13 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { session, loading } = useAuth();
 
-  if (!loading && (!session || !isAdmin(session))) {
-    router.push("/dashboard");
-    return null;
-  }
+  useEffect(() => {
+    if (!loading && (!session || !isAdmin(session))) {
+      router.push("/dashboard");
+    }
+  }, [loading, router, session]);
+
+  if (!loading && (!session || !isAdmin(session))) return null;
 
   if (loading) {
     return (
@@ -54,7 +58,7 @@ export default function AdminDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
           <Link
-            href=""
+            href="/admin/tickets"
             className="rounded-lg border border-border bg-card p-6 hover:border-primary/50 hover:bg-secondary/30 transition-all group"
           >
             <div className="flex items-center justify-between">
@@ -71,7 +75,7 @@ export default function AdminDashboard() {
           </Link>
 
           <Link
-            href=""
+            href="/admin/users"
             className="rounded-lg border border-border bg-card p-6 hover:border-primary/50 hover:bg-secondary/30 transition-all group"
           >
             <div className="flex items-center justify-between">
@@ -139,9 +143,9 @@ export default function AdminDashboard() {
                       </td>
                     </tr>
                   ) : (
-                    stats.byUser.slice(0, 5).map((user) => (
+                    stats.byUser.slice(0, 5).map((user, index) => (
                       <tr
-                        key={user.name}
+                        key={`${user.name}-${index}`}
                         className="border-b border-border hover:bg-secondary/30 transition-colors"
                       >
                         <td className="px-6 py-4 font-medium text-foreground">
