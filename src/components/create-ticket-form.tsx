@@ -4,9 +4,10 @@ import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { validateTicketForm } from "@/lib/validation";
 import { useAuth } from "./auth-provider";
+import type { Ticket } from "@/lib/tickets";
 
 interface CreateTicketFormProps {
-  onSuccess: () => void;
+  onSuccess: (ticket?: Ticket) => void;
 }
 
 export function CreateTicketForm({ onSuccess }: CreateTicketFormProps) {
@@ -46,14 +47,35 @@ export function CreateTicketForm({ onSuccess }: CreateTicketFormProps) {
       });
 
       const result = await res.json();
-      if (!result.success) {
+      const isSuccess =
+        Boolean(result.success) ||
+        (typeof result.message === "string" &&
+          result.message.toLowerCase().includes("successfully processed"));
+
+      if (!isSuccess) {
         toast.error(result.error || "Failed to create ticket");
         setIsLoading(false);
         return;
       }
 
+      const createdTicket: Ticket = result.ticket || {
+        id: crypto.randomUUID(),
+        title,
+        description,
+        priority,
+        status: "open",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        userId: session.user.id,
+      };
+
+      setTitle("");
+      setDescription("");
+      setPriority("medium");
+      setIsLoading(false);
       toast.success("Ticket created successfully!");
-      onSuccess();
+      onSuccess(createdTicket);
+      return;
     } catch {
       toast.error("Failed to create ticket");
     }

@@ -5,7 +5,6 @@ import type React from "react";
 import { useState } from "react";
 import { type Ticket, type TicketStatus } from "@/lib/tickets";
 import { AlertCircle } from "lucide-react";
-import { toast } from "react-toastify";
 import { FormError } from "./form-error";
 
 interface EditTicketFormProps {
@@ -58,7 +57,6 @@ export function EditTicketForm({ ticket, onSuccess }: EditTicketFormProps) {
         return;
       }
 
-      toast.success("Ticket updated successfully!");
       onSuccess();
     } catch {
       setError("Failed to update ticket");

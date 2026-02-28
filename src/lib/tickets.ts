@@ -11,6 +11,8 @@ export interface Ticket {
   createdAt: string;
   updatedAt: string;
   userId: string;
+  internalNotes?: string;
+  deletedByAdmin?: boolean;
 }
 
 const TICKETS_STORAGE_KEY = "Tickly_tickets";
@@ -32,7 +34,7 @@ export function createTicket(
   title: string,
   description: string,
   priority: "low" | "medium" | "high",
-  userId: string
+  userId: string,
 ): Ticket {
   const ticket: Ticket = {
     id: Math.random().toString(36).substring(2) + Date.now().toString(36),
@@ -62,7 +64,7 @@ export function getTicketById(id: string): Ticket | undefined {
 
 export function updateTicket(
   id: string,
-  updates: Partial<Ticket>
+  updates: Partial<Ticket>,
 ): Ticket | null {
   const tickets = getTickets();
   const index = tickets.findIndex((ticket) => ticket.id === id);

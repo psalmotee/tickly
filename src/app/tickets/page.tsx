@@ -7,14 +7,17 @@ import { CreateTicketForm } from "@/components/create-ticket-form";
 import { Modal } from "@/components/modal";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import type { Ticket } from "@/lib/tickets";
 
 export default function TicketsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [latestCreatedTicket, setLatestCreatedTicket] = useState<Ticket | null>(
+    null,
+  );
 
-  const handleCreateSuccess = () => {
+  const handleCreateSuccess = (ticket?: Ticket) => {
     setIsCreateModalOpen(false);
-    setRefreshTrigger((prev) => prev + 1);
+    setLatestCreatedTicket(ticket || null);
   };
 
   return (
@@ -46,7 +49,11 @@ export default function TicketsPage() {
           </div>
         </div>
 
-        <TicketList refreshTrigger={refreshTrigger} />
+        <TicketList
+          refreshTrigger={0}
+          latestCreatedTicket={latestCreatedTicket}
+          onCreatedTicketConsumed={() => setLatestCreatedTicket(null)}
+        />
       </div>
 
       <Modal

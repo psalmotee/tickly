@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { type Ticket } from "@/lib/tickets";
 import { TicketCard } from "./ticket-card";
 import { Modal } from "./modal";
@@ -11,45 +11,98 @@ import { useAuth } from "./auth-provider";
 
 interface TicketListProps {
   refreshTrigger: number;
+  latestCreatedTicket?: Ticket | null;
+  onCreatedTicketConsumed?: () => void;
 }
 
-export function TicketList({ refreshTrigger }: TicketListProps) {
+export function TicketList({
+  refreshTrigger,
+  latestCreatedTicket,
+  onCreatedTicketConsumed,
+}: TicketListProps) {
   const { session } = useAuth();
+  const userId = session?.user?.id;
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const loadTickets = async () => {
-    if (!session) return;
+  const loadTickets = useCallback(
+    async (targetUserId?: string) => {
+      const activeUserId = targetUserId || userId;
+      if (!activeUserId) return;
 
-    try {
-      const res = await fetch(`/api/tickets?userId=${session.user.id}`);
-      const data = await res.json();
+      try {
+        const res = await fetch(`/api/tickets?userId=${activeUserId}`, {
+          cache: "no-store",
+        });
+        const data = await res.json();
 
-      if (data.success) {
-        setTickets(data.tickets || []);
-      } else {
-        toast.error(data.error || "Failed to load tickets");
+        if (data.success) {
+          setTickets(data.tickets || []);
+        } else {
+          toast.error(data.error || "Failed to load tickets");
+        }
+      } catch {
+        toast.error("Failed to load tickets");
       }
-    } catch {
-      toast.error("Failed to load tickets");
-    }
-  };
+    },
+    [userId],
+  );
 
   useEffect(() => {
-    if (session) {
-      void loadTickets();
-    }
-  }, [refreshTrigger, session]);
+    if (!userId) return;
+
+    const timer = setTimeout(() => {
+      void loadTickets(userId);
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [refreshTrigger, userId, loadTickets]);
+
+  useEffect(() => {
+    if (!latestCreatedTicket) return;
+
+    const optimisticTimer = setTimeout(() => {
+      setTickets((prev) => {
+        const exists = prev.some(
+          (ticket) => ticket.id === latestCreatedTicket.id,
+        );
+        if (exists) return prev;
+        return [latestCreatedTicket, ...prev];
+      });
+    }, 0);
+
+    const syncTimer = setTimeout(() => {
+      if (userId) {
+        void loadTickets(userId);
+      }
+      onCreatedTicketConsumed?.();
+    }, 1200);
+
+    return () => {
+      clearTimeout(optimisticTimer);
+      clearTimeout(syncTimer);
+    };
+  }, [latestCreatedTicket, onCreatedTicketConsumed, userId, loadTickets]);
 
   const handleEdit = (ticket: Ticket) => {
+    if (ticket.deletedByAdmin) {
+      toast.error("This ticket was deleted by admin and cannot be edited");
+      return;
+    }
+
     setSelectedTicket(ticket);
     setIsEditModalOpen(true);
   };
 
   const handleDeleteClick = (ticket: Ticket) => {
+    if (ticket.deletedByAdmin) {
+      toast.error("This ticket was deleted by admin and cannot be accessed");
+      return;
+    }
+
     setSelectedTicket(ticket);
     setIsDeleteModalOpen(true);
   };
@@ -66,8 +119,8 @@ export function TicketList({ refreshTrigger }: TicketListProps) {
           return;
         }
 
-        if (session) {
-          void loadTickets();
+        if (userId) {
+          void loadTickets(userId);
         }
 
         toast.success("Ticket deleted successfully 🗑️");
@@ -85,10 +138,9 @@ export function TicketList({ refreshTrigger }: TicketListProps) {
   const handleEditSuccess = () => {
     setIsEditModalOpen(false);
     setSelectedTicket(null);
-    if (session) {
-      void loadTickets();
+    if (userId) {
+      void loadTickets(userId);
     }
-    toast.success("Ticket updated successfully");
   };
 
   if (tickets.length === 0) {

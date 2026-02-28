@@ -10,6 +10,7 @@ interface TicketDetailsData {
   title: string;
   description: string;
   createdAt: string;
+  internalNotes?: string;
   users?: {
     fullName?: string;
     email?: string;
@@ -29,9 +30,15 @@ export default function TicketDetails() {
 
     fetch(`/api/admin/tickets/${ticketId}`)
       .then((res) => res.json())
-      .then((data) =>
-        data.success ? setTicket(data.ticket) : toast.error("Not found"),
-      );
+      .then((data) => {
+        if (!data.success) {
+          toast.error("Not found");
+          return;
+        }
+
+        setTicket(data.ticket);
+        setNote(data.ticket?.internalNotes || "");
+      });
   }, [ticketId]);
 
   const saveNote = async () => {
@@ -40,9 +47,13 @@ export default function TicketDetails() {
     setIsSaving(true);
     const res = await fetch(`/api/admin/tickets/${ticketId}`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ note }),
     });
-    if (res.ok) toast.success("Internal note saved!");
+    if (res.ok) {
+      setTicket((prev) => (prev ? { ...prev, internalNotes: note } : prev));
+      toast.success("Internal note saved!");
+    }
     setIsSaving(false);
   };
 

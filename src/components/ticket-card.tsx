@@ -10,6 +10,8 @@ interface TicketCardProps {
 }
 
 export function TicketCard({ ticket, onEdit, onDelete }: TicketCardProps) {
+  const isDeletedByAdmin = Boolean(ticket.deletedByAdmin);
+
   const statusColors = {
     open: "bg-amber-500/10 text-amber-700 border-amber-200",
     "in-progress": "bg-blue-500/10 text-blue-700 border-blue-200",
@@ -23,6 +25,14 @@ export function TicketCard({ ticket, onEdit, onDelete }: TicketCardProps) {
   };
 
   const getStatusDisplay = () => {
+    if (isDeletedByAdmin) {
+      return (
+        <span className="inline-flex items-center rounded-full border border-gray-300 bg-gray-500/10 px-3 py-1 text-xs font-medium text-gray-700">
+          Deleted by Admin
+        </span>
+      );
+    }
+
     if (ticket.status === "closed") {
       return (
         <span
@@ -61,15 +71,17 @@ export function TicketCard({ ticket, onEdit, onDelete }: TicketCardProps) {
         </div>
         <div className="flex gap-2">
           <button
+            disabled={isDeletedByAdmin}
             onClick={() => onEdit(ticket)}
-            className="p-2 hover:bg-secondary rounded-lg transition-colors text-foreground"
+            className="p-2 hover:bg-secondary rounded-lg transition-colors text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
             title="Edit ticket"
           >
             <Edit2 className="h-4 w-4" />
           </button>
           <button
+            disabled={isDeletedByAdmin}
             onClick={() => onDelete(ticket.id)}
-            className="p-2 hover:bg-destructive/10 rounded-lg transition-colors text-destructive"
+            className="p-2 hover:bg-destructive/10 rounded-lg transition-colors text-destructive disabled:opacity-40 disabled:cursor-not-allowed"
             title="Delete ticket"
           >
             <Trash2 className="h-4 w-4" />

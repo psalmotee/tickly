@@ -71,6 +71,8 @@ export async function GET() {
         : userProfile?.first_name
           ? `${userProfile.first_name} ${userProfile.last_name || ""}`.trim()
           : payload?.fullName || payload?.name || email;
+    const profileRole =
+      userProfile?.role || userProfile?.userRole || userProfile?.user_role;
 
     return NextResponse.json(
       {
@@ -80,7 +82,7 @@ export async function GET() {
             id: userId || email,
             email,
             fullName: userName,
-            role: normalizeRole(userProfile?.role || payload?.role),
+            role: normalizeRole(profileRole || payload?.role),
           },
           token,
         },

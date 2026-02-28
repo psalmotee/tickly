@@ -1,20 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import NextLink from "next/link";
-import {
-  getAllTickets,
-  updateTicket,
-  deleteTicket,
-  type Ticket,
-} from "@/lib/tickets";
+import { type Ticket } from "@/lib/tickets";
 import { Modal } from "./modal";
 import { DeleteConfirmationModal } from "./delete-confirmation-modal";
 import { Trash2, ChevronDown, CheckCircle2 } from "lucide-react";
-import { toast } from "react-toastify"; // ✅ import toast
+import { toast } from "react-toastify";
 
-export function AdminTicketList() {
-  const [tickets, setTickets] = useState<Ticket[]>(() => getAllTickets());
+interface AdminTicketListProps {
+  onStatsChange?: (stats: {
+    total: number;
+    open: number;
+    inProgress: number;
+    closed: number;
+  }) => void;
+}
+
+export function AdminTicketList({ onStatsChange }: AdminTicketListProps) {
+  const [tickets, setTickets] = useState<
+    Array<Ticket & { user?: { fullName?: string; email?: string } | null }>
+  >([]);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     ticket: Ticket | null;
@@ -25,18 +31,69 @@ export function AdminTicketList() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  function loadTickets() {
-    setTickets(getAllTickets());
+  async function loadTickets() {
+    try {
+      const res = await fetch("/api/admin/tickets");
+      const data = await res.json();
+
+      if (!data.success) {
+        toast.error(data.error || "Failed to load tickets");
+        return;
+      }
+
+      const nextTickets = data.tickets || [];
+      setTickets(nextTickets);
+
+      if (onStatsChange) {
+        onStatsChange({
+          total: nextTickets.length,
+          open: nextTickets.filter((t: Ticket) => t.status === "open").length,
+          inProgress: nextTickets.filter(
+            (t: Ticket) => t.status === "in-progress",
+          ).length,
+          closed: nextTickets.filter((t: Ticket) => t.status === "closed")
+            .length,
+        });
+      }
+    } catch {
+      toast.error("Failed to load tickets");
+    }
   }
 
-  const handleStatusChange = (
+  useEffect(() => {
+    void loadTickets();
+  }, []);
+
+  const handleStatusChange = async (
     ticket: Ticket,
     status: "open" | "in-progress" | "closed",
   ) => {
-    updateTicket(ticket.id, { status });
-    loadTickets();
+    try {
+      if (ticket.deletedByAdmin) {
+        toast.error("This ticket is marked deleted by admin");
+        return;
+      }
+
+      const res = await fetch(`/api/admin/tickets/${ticket.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        toast.error(data.error || "Failed to update ticket status");
+        return;
+      }
+
+      await loadTickets();
+    } catch {
+      toast.error("Failed to update ticket status");
+      return;
+    }
+
     setEditingId(null);
-    toast.success(`Ticket marked as ${getStatusLabel(status)} ✅`); // ✅ Toast for status change
+    toast.success(`Ticket marked as ${getStatusLabel(status)} ✅`);
   };
 
   const handleDeleteClick = (ticket: Ticket) => {
@@ -46,12 +103,23 @@ export function AdminTicketList() {
   const handleConfirmDelete = async () => {
     if (!deleteModal.ticket) return;
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    deleteTicket(deleteModal.ticket.id);
-    loadTickets();
+    const res = await fetch(`/api/admin/tickets/${deleteModal.ticket.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ softDelete: true }),
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      toast.error(data.error || "Failed to delete ticket");
+      setIsLoading(false);
+      return;
+    }
+
+    await loadTickets();
     setDeleteModal({ isOpen: false, ticket: null });
     setIsLoading(false);
-    toast.success("Ticket deleted successfully 🗑️"); // ✅ Toast for delete success
+    toast.success("Ticket marked deleted for user view 🗑️");
   };
 
   const getStatusColor = (status: string) => {
@@ -143,17 +211,27 @@ export function AdminTicketList() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">
-                      {ticket.userId}
+                      <div className="space-y-1">
+                        <p className="text-foreground text-sm font-medium">
+                          {ticket.user?.fullName ||
+                            ticket.userId ||
+                            "Unknown User"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {ticket.user?.email || "No email"}
+                        </p>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="relative">
                         <button
+                          disabled={ticket.deletedByAdmin}
                           onClick={() =>
                             setEditingId(
                               editingId === ticket.id ? null : ticket.id,
                             )
                           }
-                          className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1 text-xs font-medium transition-colors ${getStatusColor(
+                          className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${getStatusColor(
                             ticket.status,
                           )}`}
                         >

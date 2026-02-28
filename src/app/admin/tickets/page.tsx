@@ -1,16 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider"; // Use this instead of getSession
 import { isAdmin } from "@/lib/admin";
 import { AdminHeader } from "@/components/admin-header";
 import { AdminTicketList } from "@/components/admin-ticket-list";
 import { AdminStats } from "@/components/admin-stats"; // Import your stats
-import { getAllTickets } from "@/lib/tickets";
 
 export default function AdminTicketsPage() {
   const router = useRouter();
   const { session, loading } = useAuth();
+  const [stats, setStats] = useState({
+    total: 0,
+    open: 0,
+    inProgress: 0,
+    closed: 0,
+  });
 
   // Redirect if not admin
   if (!loading && (!session || !isAdmin(session))) {
@@ -25,15 +31,6 @@ export default function AdminTicketsPage() {
       </div>
     );
   }
-
-  // Calculate stats for the AdminStats component
-  const allTickets = getAllTickets();
-  const stats = {
-    total: allTickets.length,
-    open: allTickets.filter((t) => t.status === "open").length,
-    inProgress: allTickets.filter((t) => t.status === "in-progress").length,
-    closed: allTickets.filter((t) => t.status === "closed").length,
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -53,7 +50,7 @@ export default function AdminTicketsPage() {
           <AdminStats {...stats} />
         </div>
 
-        <AdminTicketList />
+        <AdminTicketList onStatsChange={setStats} />
       </main>
     </div>
   );
