@@ -39,38 +39,45 @@ function decodeJwtPayload(token: string): TokenPayload | null {
 }
 
 export async function getRequestSessionUser(): Promise<ApiSessionUser | null> {
-  const token = (await cookies()).get("token")?.value;
-  if (!token) return null;
+  try {
+    const token = (await cookies()).get("token")?.value;
+    if (!token) return null;
 
-  const payload = decodeJwtPayload(token);
-  const email = payload?.email;
-  if (!email) return null;
+    const payload = decodeJwtPayload(token);
+    const email = payload?.email;
+    if (!email) return null;
 
-  const response = await manta.fetchAllRecords({
-    table: "tickly-auth",
-    where: { email },
-    list: 1,
-  });
+    const response = await manta.fetchAllRecords({
+      table: "tickly-auth",
+      where: { email },
+      list: 1,
+    });
 
-  const userProfile =
-    response.status && response.data.length > 0 ? response.data[0] : null;
+    const userProfile =
+      response.status && response.data.length > 0 ? response.data[0] : null;
 
-  const userId =
-    userProfile?.id ||
-    userProfile?.user_id ||
-    payload?.id ||
-    payload?.userId ||
-    payload?.sub ||
-    email;
+    const userId =
+      userProfile?.id ||
+      userProfile?.user_id ||
+      payload?.id ||
+      payload?.userId ||
+      payload?.sub ||
+      email;
 
-  return {
-    id: userId,
-    email,
-    role: normalizeRole(
-      userProfile?.role ||
-        userProfile?.userRole ||
-        userProfile?.user_role ||
-        payload?.role,
-    ),
-  };
+    return {
+      id: userId,
+      email,
+      role: normalizeRole(
+        userProfile?.role ||
+          userProfile?.userRole ||
+          userProfile?.user_role ||
+          payload?.role,
+      ),
+    };
+  } catch (error: unknown) {
+    console.error("[server-session] Failed to resolve request session user", {
+      error,
+    });
+    return null;
+  }
 }

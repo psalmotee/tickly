@@ -39,32 +39,32 @@ function mapTicketRecord(record: Record<string, unknown>) {
 }
 
 export async function GET(req: Request) {
-  const sessionUser = await getRequestSessionUser();
-  if (!sessionUser) {
-    return NextResponse.json(
-      { success: false, error: "Unauthorized" },
-      { status: 401 },
-    );
-  }
-
-  const { searchParams } = new URL(req.url);
-  const userId = searchParams.get("userId");
-
-  if (!userId) {
-    return NextResponse.json(
-      { success: false, error: "userId is required" },
-      { status: 400 },
-    );
-  }
-
-  if (sessionUser.role !== "admin" && sessionUser.id !== userId) {
-    return NextResponse.json(
-      { success: false, error: "Forbidden" },
-      { status: 403 },
-    );
-  }
-
   try {
+    const sessionUser = await getRequestSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: "userId is required" },
+        { status: 400 },
+      );
+    }
+
+    if (sessionUser.role !== "admin" && sessionUser.id !== userId) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 },
+      );
+    }
+
     const ticketTable = await resolveTicketTable();
 
     const mergedTickets = new Map<string, ReturnType<typeof mapTicketRecord>>();
@@ -86,8 +86,12 @@ export async function GET(req: Request) {
             mergedTickets.set(key, mapped);
           }
         }
-      } catch {
-        
+      } catch (candidateError: unknown) {
+        console.error("[tickets][GET] Failed fetching ticket candidate field", {
+          userIdField,
+          userId,
+          candidateError,
+        });
       }
     }
 
@@ -101,10 +105,9 @@ export async function GET(req: Request) {
       tickets,
     });
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Failed to fetch tickets";
+    console.error("[tickets][GET] Failed to fetch tickets", { error });
     return NextResponse.json(
-      { success: false, error: message },
+      { success: false, error: "Failed to fetch tickets" },
       { status: 500 },
     );
   }
@@ -120,7 +123,24 @@ export async function POST(req: Request) {
       );
     }
 
-    const { title, description, priority, userId } = await req.json();
+    const body = await req.json().catch((parseError: unknown) => {
+      console.error("[tickets][POST] Invalid JSON body", { parseError });
+      return null;
+    });
+
+    if (!body || typeof body !== "object") {
+      return NextResponse.json(
+        { success: false, error: "Invalid request body. Expected JSON." },
+        { status: 400 },
+      );
+    }
+
+    const { title, description, priority, userId } = body as {
+      title?: unknown;
+      description?: unknown;
+      priority?: unknown;
+      userId?: unknown;
+    };
 
     const validationError = validateTicketCreateInput({
       title,
@@ -221,6 +241,11 @@ export async function POST(req: Request) {
             ? candidateError.message
             : "Failed to create ticket";
 
+        console.error("[tickets][POST] Failed with payload candidate", {
+          payload,
+          candidateError,
+        });
+
         lastError = message;
         if (!message.includes("Unknown field")) {
           break;
@@ -238,6 +263,8 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Failed to create ticket";
+
+    console.error("[tickets][POST] Failed to create ticket", { error });
 
     if (
       typeof message === "string" &&
