@@ -1,111 +1,35 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
-import { isAdmin } from "@/lib/admin";
-import { AdminHeader } from "@/components/admin-header";
+import { isAdmin } from "@/lib/access-control";
+import { AdminDashboardHeader } from "@/components/admin-dashboard-header";
 import { AdminStats } from "@/components/admin-stats";
 import Link from "next/link";
 import { TrendingUp, Users, Ticket } from "lucide-react";
 
-interface AdminTicketRecord {
-  id: string;
-  status: "open" | "in-progress" | "closed";
-  userId: string;
-  user?: {
-    fullName?: string;
-    email?: string;
-  } | null;
-}
-
 export default function AdminDashboard() {
   const router = useRouter();
   const { session, loading } = useAuth();
-  const [tickets, setTickets] = useState<AdminTicketRecord[]>([]);
-  const [userCount, setUserCount] = useState(0);
+  const stats = {
+    total: 0,
+    open: 0,
+    inProgress: 0,
+    closed: 0,
+  };
 
-  const stats = useMemo(() => {
-    const byUserMap: Record<
-      string,
-      {
-        name: string;
-        count: number;
-        open: number;
-        inProgress: number;
-        closed: number;
-      }
-    > = {};
-
-    for (const ticket of tickets) {
-      const userKey = ticket.userId || "unknown";
-      const userName =
-        ticket.user?.fullName ||
-        ticket.user?.email ||
-        ticket.userId ||
-        "Unknown User";
-
-      if (!byUserMap[userKey]) {
-        byUserMap[userKey] = {
-          name: userName,
-          count: 0,
-          open: 0,
-          inProgress: 0,
-          closed: 0,
-        };
-      }
-
-      byUserMap[userKey].count += 1;
-      if (ticket.status === "open") byUserMap[userKey].open += 1;
-      if (ticket.status === "in-progress") byUserMap[userKey].inProgress += 1;
-      if (ticket.status === "closed") byUserMap[userKey].closed += 1;
-    }
-
-    return {
-      total: tickets.length,
-      open: tickets.filter((t) => t.status === "open").length,
-      inProgress: tickets.filter((t) => t.status === "in-progress").length,
-      closed: tickets.filter((t) => t.status === "closed").length,
-      byUser: Object.values(byUserMap).sort((a, b) => b.count - a.count),
-    };
-  }, [tickets]);
-
-  useEffect(() => {
-    if (loading || !session || !isAdmin(session)) return;
-
-    const load = async () => {
-      try {
-        const res = await fetch("/api/admin/tickets", { cache: "no-store" });
-        const data = await res.json();
-        if (data.success) {
-          setTickets(data.tickets || []);
-        }
-
-        const usersRes = await fetch("/api/admin/users?page=1", {
-          cache: "no-store",
-        });
-        const usersData = await usersRes.json();
-        if (usersData.success) {
-          const totalFromMeta = usersData.meta?.total;
-          setUserCount(
-            typeof totalFromMeta === "number"
-              ? totalFromMeta
-              : Array.isArray(usersData.users)
-                ? usersData.users.length
-                : 0,
-          );
-        }
-      } catch {
-        // Keep dashboard usable even if ticket stats fail to load
-      }
-    };
-
-    void load();
-  }, [loading, session]);
+  const topUsers: Array<{
+    name: string;
+    count: number;
+    open: number;
+    inProgress: number;
+    closed: number;
+  }> = [];
 
   useEffect(() => {
     if (!loading && (!session || !isAdmin(session))) {
-      router.push("/dashboard");
+      router.push("/user-dashboard");
     }
   }, [loading, router, session]);
 
@@ -124,7 +48,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AdminHeader />
+      <AdminDashboardHeader />
 
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
@@ -145,7 +69,7 @@ export default function AdminDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
           <Link
-            href="/admin/tickets"
+            href="/admin-dashboard/admin-tickets-list-page"
             className="rounded-lg border border-border bg-card p-6 hover:border-primary/50 hover:bg-secondary/30 transition-all group"
           >
             <div className="flex items-center justify-between">
@@ -162,15 +86,13 @@ export default function AdminDashboard() {
           </Link>
 
           <Link
-            href="/admin/users"
+            href="/admin-dashboard/users-list-page"
             className="rounded-lg border border-border bg-card p-6 hover:border-primary/50 hover:bg-secondary/30 transition-all group"
           >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Manage Users</p>
-                <p className="text-2xl font-bold text-foreground mt-2">
-                  {userCount}
-                </p>
+                <p className="text-2xl font-bold text-foreground mt-2">0</p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
                 <Users className="h-6 w-6 text-primary" />
@@ -223,7 +145,7 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {stats.byUser.length === 0 ? (
+                  {topUsers.length === 0 ? (
                     <tr>
                       <td
                         colSpan={5}
@@ -233,7 +155,7 @@ export default function AdminDashboard() {
                       </td>
                     </tr>
                   ) : (
-                    stats.byUser.slice(0, 5).map((user, index) => (
+                    topUsers.slice(0, 5).map((user, index) => (
                       <tr
                         key={`${user.name}-${index}`}
                         className="border-b border-border hover:bg-secondary/30 transition-colors"

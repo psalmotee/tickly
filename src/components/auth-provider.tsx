@@ -3,7 +3,7 @@
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import type { AuthSession } from "@/lib/auth";
+import type { AuthSession } from "@/lib/auth-client";
 
 interface AuthContextType {
   session: AuthSession | null;
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch("/api/checkAuth", {
+        const res = await fetch("/api/check-auth", {
           cache: "no-store",
           credentials: "include",
         });
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const isAuthPage =
       pathname === "/login" || pathname === "/signup" || pathname === "/";
-    const isAdminPage = pathname.startsWith("/admin");
+    const isAdminPage = pathname.startsWith("/admin-dashboard");
 
     // 1. Not logged in? Boot to login unless already on an auth page
     if (!session && !isAuthPage) {
@@ -69,14 +69,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // 2. Logged in? Redirect away from login/signup/landing to correct dashboard
     if (session && isAuthPage) {
-      const dest = session.user.role === "admin" ? "/admin" : "/dashboard";
+      const dest =
+        session.user.role === "admin" ? "/admin-dashboard" : "/user-dashboard";
       router.push(dest);
       return;
     }
 
-    // 3. Role Check: User trying to hit /admin? Boot to /dashboard
+    // 3. Role Check: User trying to hit /admin-dashboard? Boot to /user-dashboard
     if (session && isAdminPage && session.user.role !== "admin") {
-      router.push("/dashboard");
+      router.push("/user-dashboard");
     }
   }, [pathname, router, session, loading]);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import type { Ticket } from "@/lib/tickets";
+import type { Ticket } from "@/lib/ticket-local-store";
 import { Trash2, Edit2, CheckCircle2 } from "lucide-react";
 
 interface TicketCardProps {

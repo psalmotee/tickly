@@ -2,9 +2,9 @@
 
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import { validateTicketForm } from "@/lib/validation";
+import { validateTicketForm } from "@/lib/form-validation";
 import { useAuth } from "./auth-provider";
-import type { Ticket } from "@/lib/tickets";
+import type { Ticket } from "@/lib/ticket-local-store";
 
 interface CreateTicketFormProps {
   onSuccess: (ticket?: Ticket) => void;

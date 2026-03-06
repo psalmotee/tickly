@@ -1,58 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { type Ticket } from "@/lib/tickets";
-import { isTicketDeletedByAdmin } from "@/lib/ticket-deletion";
-
-import { useAuth } from "./auth-provider";
 import { BarChart3, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 
 export function StatsCards() {
-  const { session } = useAuth();
-  const [stats, setStats] = useState({
+  const stats = {
     total: 0,
     open: 0,
     inProgress: 0,
     closed: 0,
-  });
-
-  useEffect(() => {
-    if (!session?.user?.id) {
-      setStats({ total: 0, open: 0, inProgress: 0, closed: 0 });
-      return;
-    }
-
-    const loadStats = async () => {
-      try {
-        const res = await fetch(`/api/tickets?userId=${session.user.id}`, {
-          cache: "no-store",
-        });
-        const data = await res.json();
-
-        if (!data.success) return;
-
-        const activeTickets = (data.tickets || []).filter(
-          (ticket: Ticket) =>
-            !ticket.deletedByAdmin &&
-            !isTicketDeletedByAdmin(ticket.internalNotes),
-        );
-
-        setStats({
-          total: activeTickets.length,
-          open: activeTickets.filter((t: Ticket) => t.status === "open").length,
-          inProgress: activeTickets.filter(
-            (t: Ticket) => t.status === "in-progress",
-          ).length,
-          closed: activeTickets.filter((t: Ticket) => t.status === "closed")
-            .length,
-        });
-      } catch {
-        // Keep default stats on fetch error.
-      }
-    };
-
-    void loadStats();
-  }, [session?.user?.id]);
+  };
 
   const cards = [
     {

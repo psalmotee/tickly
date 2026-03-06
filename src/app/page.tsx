@@ -1,10 +1,10 @@
 "use client";
 
-import Header from "./landingPage/header/page";
-import Hero from "./landingPage/hero/page";
-import Features from "./landingPage/features/page";
-import CTA from "./landingPage/CTA/page";
-import Footer from "./landingPage/footer/page";
+import Header from "./landing-page/header/page";
+import Hero from "./landing-page/hero/page";
+import Features from "./landing-page/features/page";
+import CTA from "./landing-page/cta/page";
+import Footer from "./landing-page/footer/page";
 
 export default function Home() {
   return (

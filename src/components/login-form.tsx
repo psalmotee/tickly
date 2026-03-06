@@ -2,11 +2,11 @@
 
 import type React from "react";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { login } from "@/lib/auth";
-import { validateLoginForm } from "@/lib/validation";
+import { login } from "@/lib/auth-client";
+import { validateLoginForm } from "@/lib/form-validation";
 import { FormError } from "./form-error";
 import { Eye } from "lucide-react";
 import { useAuth } from "./auth-provider";
@@ -21,12 +21,7 @@ export function LoginForm() {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    const adminParam = searchParams.get("admin");
-    setIsAdmin(adminParam === "true");
-  }, [searchParams]);
+  const isAdmin = searchParams.get("admin") === "true";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +46,9 @@ export function LoginForm() {
     if (result.success && result.session) {
       setSession(result.session);
       router.push(
-        result.session.user.role === "admin" ? "/admin" : "/dashboard"
+        result.session.user.role === "admin"
+          ? "/admin-dashboard"
+          : "/user-dashboard",
       );
     } else {
       setError(result.error || "Login failed");
@@ -165,7 +162,7 @@ export function LoginForm() {
             </>
           ) : (
             <>
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
                 href="/signup"
                 className="font-medium text-primary hover:underline"

@@ -2,16 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
-import { isAdmin } from "@/lib/admin";
-import { AdminHeader } from "@/components/admin-header";
-import { AdminUserList } from "@/components/admin-users-list";
+import { isAdmin } from "@/lib/access-control";
+import { AdminDashboardHeader } from "@/components/admin-dashboard-header";
 
 export default function AdminUsersPage() {
   const router = useRouter();
   const { session, loading } = useAuth();
 
   if (!loading && (!session || !isAdmin(session))) {
-    router.push("/dashboard");
+    router.push("/user-dashboard");
     return null;
   }
 
@@ -28,7 +27,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AdminHeader />
+      <AdminDashboardHeader />
 
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
@@ -38,7 +37,9 @@ export default function AdminUsersPage() {
           </p>
         </div>
 
-        <AdminUserList />
+        <div className="mb-8 mx-auto max-w-5xl justify-center items-center">
+          <p className="font-md text-3xl text-foreground">List Users</p>
+        </div>
       </main>
     </div>
   );

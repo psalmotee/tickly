@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { manta } from "@/lib/manta-server";
+import { manta } from "@/lib/manta-client";
 
 const MANTA_BASE_URL =
   "https://api.mantahq.com/api/workflow/samsonmoradeyo/authentication/tickly-auth";
 
 function normalizeRole(role?: string): "admin" | "user" {
   const value = role?.toLowerCase().trim();
-  if (value === "admin" || value === "amin" || value === "administrator") {
+  if (value === "admin" || value === "administrator") {
     return "admin";
   }
 

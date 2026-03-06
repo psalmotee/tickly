@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { manta } from "@/lib/manta-server";
+import { manta } from "@/lib/manta-client";
 
 interface TokenPayload {
   sub?: string;
@@ -14,7 +14,7 @@ interface TokenPayload {
 
 function normalizeRole(role?: string): "admin" | "user" {
   const value = role?.toLowerCase().trim();
-  if (value === "admin" || value === "amin" || value === "administrator") {
+  if (value === "admin" || value === "administrator") {
     return "admin";
   }
 

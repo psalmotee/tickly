@@ -1,13 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { logout } from "@/lib/auth";
+import { logout } from "@/lib/auth-client";
 import { LogOut, Menu } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "./auth-provider";
 
-export function DashboardHeader() {
+export function UserDashboardHeader() {
   const router = useRouter();
   const { session, setSession } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -34,7 +34,7 @@ export function DashboardHeader() {
           <div className="hidden sm:flex items-center gap-4">
             {session?.user.role === "admin" && (
               <Link
-                href="/admin"
+                href="/admin-dashboard"
                 className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
               >
                 Admin Panel
@@ -42,7 +42,7 @@ export function DashboardHeader() {
             )}
             <div className="flex flex-col items-end">
               <p className="text-sm font-medium text-foreground">
-                {session?.user.fullName || session?.user.email}
+                {session?.user.fullName}
               </p>
               <p className="text-xs text-muted-foreground">
                 {session?.user.email}
@@ -69,7 +69,7 @@ export function DashboardHeader() {
           <div className="sm:hidden border-t border-border py-4 space-y-3">
             <div className="px-2">
               <p className="text-sm font-medium text-foreground">
-                {session?.user.fullName || session?.user.email}
+                {session?.user.fullName}
               </p>
               <p className="text-xs text-muted-foreground">
                 {session?.user.email}

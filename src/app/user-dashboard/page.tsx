@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { DashboardHeader } from "@/components/dashboard-header";
+import { UserDashboardHeader } from "@/components/user-dashboard-header";
 import { StatsCards } from "@/components/stats-cards";
 import { ArrowRight } from "lucide-react";
 
 export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-background">
-      <DashboardHeader />
+      <UserDashboardHeader />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">
@@ -29,7 +29,7 @@ export default function DashboardPage() {
               Create, view, and manage all your tickets in one place.
             </p>
             <Link
-              href="/tickets"
+              href="/user-dashboard/tickets"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
             >
               Go to Tickets
