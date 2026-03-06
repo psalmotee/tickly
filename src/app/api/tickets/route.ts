@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
-import { manta } from "@/lib/manta-server";
-import { resolveTicketTable } from "@/lib/manta-ticket-table";
-import { isTicketDeletedByAdmin } from "@/lib/ticket-deletion";
+import { manta } from "@/lib/manta-client";
+import { resolveTicketTable } from "@/lib/ticket-table-resolver";
+import { isTicketDeletedByAdmin } from "@/lib/ticket-soft-delete";
+import { getRequestSessionUser } from "@/lib/server-session";
+import {
+  validateTicketCreateInput,
+  VALID_TICKET_PRIORITIES,
+} from "@/lib/ticket-rules";
 
 function mapTicketRecord(record: Record<string, unknown>) {
   const internalNotes =
@@ -34,6 +39,14 @@ function mapTicketRecord(record: Record<string, unknown>) {
 }
 
 export async function GET(req: Request) {
+  const sessionUser = await getRequestSessionUser();
+  if (!sessionUser) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
+
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get("userId");
 
@@ -41,6 +54,13 @@ export async function GET(req: Request) {
     return NextResponse.json(
       { success: false, error: "userId is required" },
       { status: 400 },
+    );
+  }
+
+  if (sessionUser.role !== "admin" && sessionUser.id !== userId) {
+    return NextResponse.json(
+      { success: false, error: "Forbidden" },
+      { status: 403 },
     );
   }
 
@@ -67,7 +87,7 @@ export async function GET(req: Request) {
           }
         }
       } catch {
-        // Keep trying possible user id field variants.
+        
       }
     }
 
@@ -92,49 +112,75 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const sessionUser = await getRequestSessionUser();
+    if (!sessionUser) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     const { title, description, priority, userId } = await req.json();
 
-    if (!title || !description || !priority || !userId) {
+    const validationError = validateTicketCreateInput({
+      title,
+      description,
+      priority,
+      userId,
+    });
+    if (validationError) {
       return NextResponse.json(
-        { success: false, error: "Missing required fields" },
+        { success: false, error: validationError },
         { status: 400 },
       );
     }
+
+    if (sessionUser.role !== "admin" && sessionUser.id !== userId) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 },
+      );
+    }
+
+    const normalizedTitle = (title as string).trim();
+    const normalizedDescription = (description as string).trim();
+    const normalizedPriority =
+      priority as (typeof VALID_TICKET_PRIORITIES)[number];
 
     const ticketTable = await resolveTicketTable();
 
     const payloadCandidates: Array<Record<string, unknown>> = [
       {
-        title,
-        description,
-        priority,
+        title: normalizedTitle,
+        description: normalizedDescription,
+        priority: normalizedPriority,
         status: "open",
         user_id: userId,
       },
       {
-        title,
-        description,
-        priority,
+        title: normalizedTitle,
+        description: normalizedDescription,
+        priority: normalizedPriority,
         status: "open",
         userId,
       },
       {
-        title,
-        description,
-        priority,
+        title: normalizedTitle,
+        description: normalizedDescription,
+        priority: normalizedPriority,
         status: "open",
         userid: userId,
       },
       {
-        title,
-        description,
-        priority,
+        title: normalizedTitle,
+        description: normalizedDescription,
+        priority: normalizedPriority,
         user_id: userId,
       },
       {
-        title,
-        description,
-        priority,
+        title: normalizedTitle,
+        description: normalizedDescription,
+        priority: normalizedPriority,
         userId,
       },
     ];

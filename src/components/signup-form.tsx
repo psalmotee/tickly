@@ -5,8 +5,8 @@ import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signup, login } from "@/lib/auth";
-import { validateSignupForm } from "@/lib/validation";
+import { signup, login } from "@/lib/auth-client";
+import { validateSignupForm } from "@/lib/form-validation";
 import { FormError } from "./form-error";
 import { Eye } from "lucide-react";
 import { useAuth } from "./auth-provider";
@@ -34,7 +34,7 @@ export function SignupForm() {
       fullName,
       email,
       password,
-      confirmPassword
+      confirmPassword,
     );
 
     if (!validation.isValid) {
@@ -47,7 +47,12 @@ export function SignupForm() {
       return;
     }
 
-    const signupResult = await signup(fullName, email, password, confirmPassword);
+    const signupResult = await signup(
+      fullName,
+      email,
+      password,
+      confirmPassword,
+    );
 
     if (!signupResult.success) {
       setError(signupResult.error || "Signup failed");
@@ -60,7 +65,7 @@ export function SignupForm() {
 
     if (loginResult.success && loginResult.session) {
       setSession(loginResult.session);
-      router.push("/dashboard");
+      router.push("/user-dashboard");
     } else {
       setError("Signup successful, but login failed. Please try logging in.");
     }

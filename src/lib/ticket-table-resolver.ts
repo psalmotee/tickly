@@ -1,4 +1,4 @@
-import { manta } from "@/lib/manta-server";
+import { manta } from "@/lib/manta-client";
 
 const ENV_TICKET_TABLE = process.env.MANTA_TICKETS_TABLE;
 
@@ -21,7 +21,7 @@ export async function resolveTicketTable(): Promise<string> {
       cachedTicketTable = table;
       return table;
     } catch {
-      // try next candidate
+      
     }
   }
 

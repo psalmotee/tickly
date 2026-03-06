@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { DashboardHeader } from "@/components/dashboard-header";
+import { UserDashboardHeader } from "@/components/user-dashboard-header";
 import { TicketList } from "@/components/ticket-list";
 import { CreateTicketForm } from "@/components/create-ticket-form";
 import { Modal } from "@/components/modal";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import type { Ticket } from "@/lib/tickets";
+import type { Ticket } from "@/lib/ticket-local-store";
 
 export default function TicketsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -22,7 +22,7 @@ export default function TicketsPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <DashboardHeader />
+      <UserDashboardHeader />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
@@ -41,7 +41,7 @@ export default function TicketsPage() {
               New Ticket
             </button>
             <Link
-              href="/dashboard"
+              href="/user-dashboard"
               className="flex-1 sm:flex-none inline-flex items-center justify-center rounded-lg border border-border px-4 py-2 font-medium text-foreground bg-primary/10 hover:bg-primary/20 hover:border-primary/50 transition-colors"
             >
               Dashboard

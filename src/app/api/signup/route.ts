@@ -7,7 +7,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    console.log("Incoming body:", body); // DEBUG
+    console.log("Incoming body:", body);
 
     const mantaRes = await fetch(`${MANTA_BASE_URL}/signup`, {
       method: "POST",
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
     const data = await mantaRes.json();
 
-    console.log("Manta response:", data); // DEBUG
+    console.log("Manta response:", data);
 
     if (!mantaRes.ok) {
       return NextResponse.json(
