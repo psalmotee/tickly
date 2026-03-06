@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
-const MANTA_BASE_URL =
-  "https://api.mantahq.com/api/workflow/samsonmoradeyo/authentication/tickly-auth";
+const MANTA_BASE_URL = process.env.MANTA_BASE_URL;
 
 export async function POST(req: Request) {
   try {
@@ -34,6 +33,14 @@ export async function POST(req: Request) {
           error: "fullName, email, and password are required.",
         },
         { status: 400 },
+      );
+    }
+
+    if (!MANTA_BASE_URL) {
+      console.error("[signup] Missing MANTA_BASE_URL environment variable");
+      return NextResponse.json(
+        { success: false, error: "Server configuration error." },
+        { status: 500 },
       );
     }
 
