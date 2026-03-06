@@ -37,7 +37,8 @@ export function TicketList({
         } else {
           toast.error(data.error || "Failed to load tickets");
         }
-      } catch {
+      } catch (error: unknown) {
+        console.error("[ticket-list] Failed to load tickets", { error });
         toast.error("Failed to load tickets");
       }
     },

@@ -20,8 +20,11 @@ export async function resolveTicketTable(): Promise<string> {
       await manta.fetchAllRecords({ table, list: 1 });
       cachedTicketTable = table;
       return table;
-    } catch {
-      
+    } catch (error: unknown) {
+      console.warn("[ticket-table-resolver] Table probe failed", {
+        table,
+        error,
+      });
     }
   }
 

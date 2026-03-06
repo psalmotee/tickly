@@ -9,19 +9,10 @@ import Footer from "./landing-page/footer/page";
 export default function Home() {
   return (
     <main className="min-h-screen bg-background">
-      {/* Navigation */}
       <Header />
-
-      {/* Hero Section */}
       <Hero />
-
-      {/* Features Section */}
       <Features />
-
-      {/* CTA Section */}
       <CTA />
-
-      {/* Footer */}
       <Footer />
     </main>
   );

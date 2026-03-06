@@ -6,9 +6,9 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export const metadata: Metadata = {
-  title: "TicketFlow - Ticket Management System",
+  title: "Tickly - Ticket Management System",
   description:
-    "Streamline your workflow with TicketFlow - a modern ticket management system",
+    "Streamline your workflow with Tickly - a modern ticket management system",
 };
 
 export default function RootLayout({

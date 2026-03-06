@@ -92,10 +92,9 @@ export async function GET() {
       },
     );
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("Auth Route Error:", message);
+    console.error("[check-auth] Failed to validate session", { error });
     return NextResponse.json(
-      { success: false, error: message },
+      { success: false, error: "Failed to validate session" },
       { status: 500 },
     );
   }

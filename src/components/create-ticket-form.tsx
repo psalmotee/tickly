@@ -76,7 +76,8 @@ export function CreateTicketForm({ onSuccess }: CreateTicketFormProps) {
       toast.success("Ticket created successfully!");
       onSuccess(createdTicket);
       return;
-    } catch {
+    } catch (error: unknown) {
+      console.error("[create-ticket-form] Failed to create ticket", { error });
       toast.error("Failed to create ticket");
     }
 

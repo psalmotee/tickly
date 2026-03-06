@@ -8,7 +8,7 @@ import Link from "next/link";
 import { login } from "@/lib/auth-client";
 import { validateLoginForm } from "@/lib/form-validation";
 import { FormError } from "./form-error";
-import { Eye } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "./auth-provider";
 
 export function LoginForm() {
@@ -129,7 +129,7 @@ export function LoginForm() {
                 {showPassword ? (
                   <Eye className="h-4 w-4" />
                 ) : (
-                  <Eye className="h-4 w-4" />
+                  <EyeOff className="h-4 w-4" />
                 )}
               </button>
             </div>

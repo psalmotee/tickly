@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { manta } from "@/lib/manta-client";
 
-const MANTA_BASE_URL =
-  "https://api.mantahq.com/api/workflow/samsonmoradeyo/authentication/tickly-auth";
+const MANTA_BASE_URL = process.env.MANTA_BASE_URL;
 
 function normalizeRole(role?: string): "admin" | "user" {
   const value = role?.toLowerCase().trim();
@@ -15,7 +14,37 @@ function normalizeRole(role?: string): "admin" | "user" {
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const body = await req.json().catch((parseError: unknown) => {
+      console.error("[login] Invalid JSON body", { parseError });
+      return null;
+    });
+
+    if (!body || typeof body !== "object") {
+      return NextResponse.json(
+        { success: false, error: "Invalid request body. Expected JSON." },
+        { status: 400 },
+      );
+    }
+
+    const { email, password } = body as {
+      email?: unknown;
+      password?: unknown;
+    };
+
+    if (typeof email !== "string" || typeof password !== "string") {
+      return NextResponse.json(
+        { success: false, error: "Email and password are required." },
+        { status: 400 },
+      );
+    }
+
+    if (!MANTA_BASE_URL) {
+      console.error("[login] Missing MANTA_BASE_URL environment variable");
+      return NextResponse.json(
+        { success: false, error: "Server configuration error." },
+        { status: 500 },
+      );
+    }
 
     const mantaRes = await fetch(`${MANTA_BASE_URL}/login`, {
       method: "POST",
@@ -28,17 +57,34 @@ export async function POST(req: Request) {
       }),
     });
 
-    const data = await mantaRes.json();
-    console.log("Manta Login Error Detail:", data);
+    const data = await mantaRes.json().catch((parseError: unknown) => {
+      console.error("[login] Failed to parse login response JSON", {
+        parseError,
+      });
+      return {} as Record<string, unknown>;
+    });
 
     if (!mantaRes.ok) {
+      const errorMessage =
+        typeof (data as { message?: unknown }).message === "string"
+          ? ((data as { message: string }).message ?? "Login failed")
+          : "Login failed";
+
       return NextResponse.json(
-        { success: false, error: data.message },
+        { success: false, error: errorMessage },
         { status: mantaRes.status },
       );
     }
 
-    const token = data.token;
+    const token = (data as { token?: unknown }).token;
+    if (typeof token !== "string" || !token) {
+      console.error("[login] Missing token in login response", { data });
+      return NextResponse.json(
+        { success: false, error: "Login failed. Invalid server response." },
+        { status: 502 },
+      );
+    }
+
     const profileRes = await manta.fetchAllRecords({
       table: "tickly-auth",
       where: { email },
@@ -49,8 +95,11 @@ export async function POST(req: Request) {
       profileRes.status && profileRes.data.length > 0
         ? profileRes.data[0]
         : null;
+    const userFromResponse = (data as { user?: Record<string, unknown> }).user;
     const userRole = normalizeRole(
-      userProfile?.role || data.user?.role || data.role,
+      userProfile?.role ||
+        (userFromResponse?.role as string | undefined) ||
+        ((data as { role?: string }).role ?? undefined),
     );
     const userId = userProfile?.id || userProfile?.user_id || email;
     const fullName =
@@ -80,7 +129,8 @@ export async function POST(req: Request) {
     });
 
     return response;
-  } catch {
+  } catch (error: unknown) {
+    console.error("[login] Unexpected login route error", { error });
     return NextResponse.json(
       { success: false, error: "Login failed" },
       { status: 500 },
